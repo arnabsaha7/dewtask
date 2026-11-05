@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+
+  /* Core palette tokens: the theme registry overrides these at runtime. */
+  --tn-bg: #f8fafc;
+  --tn-surface: #ffffff;
+  --tn-surface-elevated: #ffffff;
+  --tn-surface-muted: #f1f5f9;
+  --tn-surface-hover: #e9eef5;
+  --tn-border: #e2e8f0;
+  --tn-border-strong: #cbd5e1;
+  --tn-text: #172033;
+  --tn-text-muted: #475569;
+  --tn-text-subtle: #64748b;
+  --tn-primary: #6366f1;
+  --tn-primary-strong: #4338ca;
+  --tn-primary-hover: #4f46e5;
+  --tn-primary-soft: #eef2ff;
+  --tn-input: #ffffff;
+  --tn-overlay: rgb(15 23 42 / 42%);
+  --tn-shadow: 0 18px 50px rgb(15 23 42 / 10%);
+
+  /* Semantic status colors stay legible on both light and dark surfaces. */
+  --tn-success: #047857;
+  --tn-success-soft: #d1fae5;
+  --tn-info: #0369a1;
+  --tn-info-soft: #e0f2fe;
+  --tn-warning: #a16207;
+  --tn-warning-soft: #fef3c7;
+  --tn-danger: #b91c1c;
+  --tn-danger-soft: #fee2e2;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { width: 100%; min-height: 100%; }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--tn-bg);
+  color: var(--tn-text);
+}
+#root { min-height: 100vh; background: var(--tn-bg); color: var(--tn-text); }
+button { cursor: pointer; font: inherit; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--tn-primary);
+  outline-offset: 2px;
+}
+::selection { background: var(--tn-primary); color: #fff; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--tn-border-strong); border-radius: 10px; }
+
+/* Reusable semantic surfaces and controls. */
+.app-shell { min-height: 100%; background: var(--tn-bg); color: var(--tn-text); }
+.app-surface { background: var(--tn-surface); }
+.app-surface-elevated { background: var(--tn-surface-elevated); }
+.app-surface-muted { background: var(--tn-surface-muted); }
+.app-border { border-color: var(--tn-border); }
+.app-text { color: var(--tn-text); }
+.app-muted { color: var(--tn-text-muted); }
+.app-subtle { color: var(--tn-text-subtle); }
+.app-primary { color: var(--tn-primary-strong); }
+.app-primary-bg { background: var(--tn-primary); }
+.app-primary-soft { background: var(--tn-primary-soft); }
+.app-input { background: var(--tn-input); color: var(--tn-text); border-color: var(--tn-border); }
+.app-overlay { background: var(--tn-overlay); }
+.app-shadow { box-shadow: var(--tn-shadow); }
+.app-control { border: 1px solid var(--tn-border); background: var(--tn-surface); color: var(--tn-text-muted); }
+.app-control:hover { background: var(--tn-surface-hover); color: var(--tn-text); }
+.app-card { border: 1px solid var(--tn-border); background: var(--tn-surface); color: var(--tn-text); }
+.app-divider { border-color: var(--tn-border); }
+
+/* Dashboard metric cards use the selected palette's normal surface. */
+.stat-card {
+  border-color: var(--tn-border);
+  background: var(--tn-surface);
+  color: var(--tn-text);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
+}
+.stat-card:hover { border-color: var(--tn-border-strong); }
+.stat-icon-primary { color: var(--tn-primary); background: var(--tn-primary-soft); }
+.stat-icon-success { color: var(--tn-success); background: var(--tn-success-soft); }
+.stat-icon-info { color: var(--tn-info); background: var(--tn-info-soft); }
+.stat-icon-warning { color: var(--tn-warning); background: var(--tn-warning-soft); }
+
+/* Reminder panel is a tinted surface, not a fixed dark gradient. */
+.reminder-card {
+  border-color: var(--tn-border);
+  background: linear-gradient(135deg, var(--tn-primary-soft), var(--tn-surface));
+}
+
+/* Navigation selected state uses a readable foreground/background pair. */
+.tn-nav-active {
+  color: var(--tn-text);
+  background: var(--tn-primary-soft);
+}
+.tn-nav-active:hover { background: var(--tn-primary-soft); }
+
+[data-theme="dark"] { color-scheme: dark; }
+
+/* Theme-aware compatibility for remaining neutral utility classes. */
+.text-slate-200, .text-slate-300, .text-slate-400,
+.text-gray-200, .text-gray-300, .text-gray-400 { color: var(--tn-text-muted) !important; }
+.text-slate-500, .text-slate-600, .text-gray-500, .text-gray-600 { color: var(--tn-text-subtle) !important; }
+.text-slate-700, .text-gray-700, .text-slate-800, .text-gray-800 { color: var(--tn-text) !important; }
+[class*="border-white"] { border-color: var(--tn-border) !important; }
+
+input, textarea, select { color: var(--tn-text); accent-color: var(--tn-primary); }
+input::placeholder, textarea::placeholder { color: var(--tn-text-subtle); opacity: 1; }
+select option { background: var(--tn-surface); color: var(--tn-text); }
