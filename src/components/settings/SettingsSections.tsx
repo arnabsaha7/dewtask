@@ -22,6 +22,12 @@ import {
 
 import { themes, SYSTEM_THEME_ID } from '../../themes/registry'
 import { Capacitor } from '@capacitor/core'
+import { isTauri } from '@tauri-apps/api/core'
+import {
+  isPermissionGranted as isTauriNotificationPermissionGranted,
+  requestPermission as requestTauriNotificationPermission,
+  sendNotification as sendTauriNotification,
+} from '@tauri-apps/plugin-notification'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { clearStorage, readAllStorage, replaceAllStorage, storageRecordExists, type StorageKey } from '../../utils/storage'
 
@@ -126,6 +132,9 @@ export default function SettingsSections({ section, settings, updateSetting, onN
         if (Capacitor.isNativePlatform()) {
           const permission = await LocalNotifications.checkPermissions()
           if (!cancelled) setNotificationPermission(permission.display)
+        } else if (isTauri()) {
+          const granted = await isTauriNotificationPermissionGranted()
+          if (!cancelled) setNotificationPermission(granted ? 'granted' : 'prompt')
         } else if (typeof window !== 'undefined' && 'Notification' in window) {
           setNotificationPermission(Notification.permission)
         } else {
@@ -406,7 +415,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-[var(--tn-text)]">Permission status</p>
-              <p className="mt-1 text-xs text-[var(--tn-text-subtle)]">{notificationPermission === 'unsupported' ? 'This environment does not expose the browser notification API.' : notificationPermission === 'granted' ? 'System notifications are allowed.' : notificationPermission === 'denied' ? 'Notifications are blocked in system or browser settings.' : 'Permission has not been requested.'}</p>
+              <p className="mt-1 text-xs text-[var(--tn-text-subtle)]">{notificationPermission === 'unsupported' ? 'This environment does not expose the browser notification API.' : notificationPermission === 'granted' ? 'System notifications are allowed.' : notificationPermission === 'denied' ? 'Notifications are blocked in system settings. Enable them in Windows Settings.' : 'Permission has not been requested.'}</p>
             </div>
             <button type="button" disabled={notificationPermission === 'unsupported' || notificationPermission === 'denied' || notificationPermission === 'granted'} onClick={async () => {
               try {
@@ -415,6 +424,17 @@ export default function SettingsSections({ section, settings, updateSetting, onN
                   setNotificationPermission(permission.display)
                   if (permission.display === 'granted') window.dispatchEvent(new Event('focus'))
                   onNotice(permission.display === 'granted' ? 'System notifications enabled.' : 'System notification permission was not granted.')
+                } else if (isTauri()) {
+                  const permission = await requestTauriNotificationPermission()
+                  setNotificationPermission(permission)
+                  if (permission === 'granted') {
+                    sendTauriNotification({
+                      title: 'TaskNest notifications enabled',
+                      body: 'TaskNest can now notify you about task reminders and deadlines.',
+                    })
+                    window.dispatchEvent(new Event('focus'))
+                  }
+                  onNotice(permission === 'granted' ? 'System notifications enabled.' : 'System notification permission was not granted.')
                 } else if ('Notification' in window) {
                   const permission = await Notification.requestPermission()
                   setNotificationPermission(permission)

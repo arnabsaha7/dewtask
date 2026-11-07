@@ -3,6 +3,11 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { Task } from '../types'
 import type { TaskNestSettings } from './useSettings'
 import { Capacitor } from '@capacitor/core'
+import { isTauri } from '@tauri-apps/api/core'
+import {
+  isPermissionGranted as isTauriNotificationPermissionGranted,
+  sendNotification as sendTauriNotification,
+} from '@tauri-apps/plugin-notification'
 import { LocalNotifications } from '@capacitor/local-notifications'
 
 export interface TaskNotification {
@@ -158,8 +163,8 @@ function useNativeNotificationActions() {
 
 /**
  * Synchronizes OS-scheduled notifications on Capacitor (Android/iOS) and
- * delivers browser notifications while the app is running. Desktop Tauri does
- * not expose closed-app scheduling through its current notification backend.
+ * delivers native Tauri or browser notifications while the desktop app is running.
+ * Tauri desktop notifications do not provide closed-app scheduling.
  */
 export function useNotificationScheduler(
   tasks: Task[],
@@ -186,7 +191,13 @@ export function useNotificationScheduler(
       const record = makeNotification(task, kind, id, scheduledFor)
       setNotifications((current) => current.some((item) => item.id === id) ? current : [record, ...current].slice(0, 200))
 
-      if (!Capacitor.isNativePlatform() && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      if (isTauri()) {
+        void isTauriNotificationPermissionGranted()
+          .then((granted) => {
+            if (granted) sendTauriNotification({ title: record.title, body: record.message })
+          })
+          .catch((error) => console.warn('Could not show a native TaskNest notification:', error))
+      } else if (!Capacitor.isNativePlatform() && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         try {
           new Notification(record.title, { body: record.message, tag: id })
         } catch (error) {
@@ -239,5 +250,5 @@ export function useNotificationScheduler(
       window.removeEventListener('focus', handleWake)
       document.removeEventListener('visibilitychange', handleWake)
     }
-  }, [tasks, settings, setNotifications, ready])
+  }, [tasks, settings.remindersEnabled, settings.automaticDueDateReminders, settings.automaticOverdueReminders, settings.deadlineReminderTime, setNotifications, ready])
 }
