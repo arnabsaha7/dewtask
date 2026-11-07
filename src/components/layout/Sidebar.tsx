@@ -9,6 +9,7 @@ import {
   Brain,
   Briefcase,
   CalendarDays,
+  CalendarCheck,
   Camera,
   Car,
   ChevronDown,
@@ -109,7 +110,7 @@ interface MenuState {
 const navigation = [
   { name: 'Overview', icon: LayoutDashboard },
   { name: 'All Tasks', icon: Inbox },
-  { name: 'Today', icon: CalendarDays },
+  { name: 'Today', icon: CalendarCheck },
   { name: 'Upcoming', icon: Clock3 },
   { name: 'Calendar', icon: CalendarDays },
   { name: 'Workspace', label: 'Workspaces', icon: Folders },
