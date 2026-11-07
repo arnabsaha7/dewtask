@@ -3,12 +3,13 @@ use serde_json::{json, Value};
 use std::{collections::HashMap, fs, path::PathBuf, sync::Mutex};
 use tauri::{AppHandle, Manager};
 
-const DATA_KEYS: [&str; 5] = [
+const DATA_KEYS: [&str; 6] = [
     "tasknest_workspaces",
     "tasknest_categories",
     "tasknest_tags",
     "tasknest_tasks",
     "tasknest_settings",
+    "tasknest_notifications",
 ];
 
 pub struct Database {
@@ -170,8 +171,8 @@ impl Database {
             "tasknest_categories" => read_json_rows(&connection, "SELECT data_json FROM categories ORDER BY COALESCE(sort_order, 0), rowid"),
             "tasknest_tasks" => read_json_rows(&connection, "SELECT data_json FROM tasks ORDER BY created_at, rowid"),
             "tasknest_tags" => read_json_rows(&connection, "SELECT data_json FROM tags ORDER BY created_at, rowid"),
-            "tasknest_settings" => connection.query_row(
-                "SELECT value_json FROM app_settings WHERE key = 'tasknest_settings'", [], |row| row.get(0)
+            "tasknest_settings" | "tasknest_notifications" => connection.query_row(
+                "SELECT value_json FROM app_settings WHERE key = ?1", params![key], |row| row.get(0)
             ).optional(),
             _ => Ok(None),
         }
@@ -186,11 +187,11 @@ impl Database {
             "tasknest_categories" => write_categories(&tx, &value)?,
             "tasknest_tags" => write_tags(&tx, &value)?,
             "tasknest_tasks" => write_tasks(&tx, &value)?,
-            "tasknest_settings" => {
+            "tasknest_settings" | "tasknest_notifications" => {
                 tx.execute(
-                    "INSERT INTO app_settings(key, value_json) VALUES('tasknest_settings', ?1)
+                    "INSERT INTO app_settings(key, value_json) VALUES(?1, ?2)
                      ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')",
-                    params![raw],
+                    params![key, raw],
                 )?;
             }
             _ => return Err(rusqlite::Error::InvalidQuery),
@@ -226,7 +227,7 @@ impl Database {
             "DELETE FROM task_tags; DELETE FROM task_checklists; DELETE FROM tasks;
              DELETE FROM tags; DELETE FROM categories; DELETE FROM workspaces; DELETE FROM app_settings;"
         )?;
-        for key in ["tasknest_workspaces", "tasknest_categories", "tasknest_tags", "tasknest_tasks", "tasknest_settings"] {
+        for key in ["tasknest_workspaces", "tasknest_categories", "tasknest_tags", "tasknest_tasks", "tasknest_settings", "tasknest_notifications"] {
             if let Some(raw) = values.get(key) {
                 let value: Value = serde_json::from_str(raw).map_err(|_| rusqlite::Error::InvalidQuery)?;
                 match key {
@@ -234,7 +235,7 @@ impl Database {
                     "tasknest_categories" => write_categories(&tx, &value)?,
                     "tasknest_tags" => write_tags(&tx, &value)?,
                     "tasknest_tasks" => write_tasks(&tx, &value)?,
-                    "tasknest_settings" => { tx.execute("INSERT INTO app_settings(key,value_json) VALUES('tasknest_settings',?1)", params![raw])?; }
+                    "tasknest_settings" | "tasknest_notifications" => { tx.execute("INSERT INTO app_settings(key,value_json) VALUES(?1,?2)", params![key, raw])?; }
                     _ => {}
                 }
             }

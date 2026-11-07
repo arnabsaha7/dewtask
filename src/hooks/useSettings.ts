@@ -17,6 +17,9 @@ export interface TaskNestSettings {
   defaultSort: SortOption
   showCompletedTasks: boolean
   remindersEnabled: boolean
+  automaticDueDateReminders: boolean
+  automaticOverdueReminders: boolean
+  deadlineReminderTime: string
 }
 
 export const DEFAULT_SETTINGS: TaskNestSettings = {
@@ -28,11 +31,16 @@ export const DEFAULT_SETTINGS: TaskNestSettings = {
   defaultSort: 'created',
   showCompletedTasks: true,
   remindersEnabled: false,
+  automaticDueDateReminders: true,
+  automaticOverdueReminders: true,
+  deadlineReminderTime: '09:00',
 }
 
 export const SETTINGS_STORAGE_KEY = 'tasknest_settings'
 export function useSettings() {
-  const [settings, setSettings] = usePersistentValue<TaskNestSettings>(SETTINGS_STORAGE_KEY, DEFAULT_SETTINGS)
+  const [storedSettings, setSettings] = usePersistentValue<TaskNestSettings>(SETTINGS_STORAGE_KEY, DEFAULT_SETTINGS)
+  // Merge defaults so settings saved by older TaskNest versions gain new fields safely.
+  const settings: TaskNestSettings = { ...DEFAULT_SETTINGS, ...storedSettings }
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -52,8 +60,8 @@ export function useSettings() {
       }
       return next
     })
-  }, [])
-  const resetSettings = useCallback(() => setSettings(DEFAULT_SETTINGS), [])
+  }, [setSettings])
+  const resetSettings = useCallback(() => setSettings(DEFAULT_SETTINGS), [setSettings])
   return { settings, setSettings, updateSetting, resetSettings }
 }
 

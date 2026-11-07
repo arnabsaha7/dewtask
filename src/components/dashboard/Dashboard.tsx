@@ -1,4 +1,6 @@
 
+import { useEffect, useState } from 'react'
+
 import {
   Activity,
   ArrowRight,
@@ -7,16 +9,17 @@ import {
   CircleCheck,
   Clock3,
   ListTodo,
-  Sparkles,
   Gamepad2,
   Code2,
   BookOpen,
   User,
+  Sparkles,
 } from 'lucide-react'
 
 import type { ComponentType } from 'react'
 import type { Category, Task, Workspace } from '../../types'
 import StatCard from './StatCard'
+import GraphCards from './GraphCards'
 
 interface Props {
   tasks: Task[]
@@ -25,6 +28,7 @@ interface Props {
   onToggleTask: (id: string) => void
   onViewAll: () => void
   onSelectWorkspace: (workspace: Workspace) => void
+  onNavigateCalendar: () => void
 }
 
 const priorityStyles = {
@@ -51,6 +55,15 @@ const workspaceColors = [
   'bg-emerald-400',
 ]
 
+const getTimeBasedGreeting = () => {
+  const hour = new Date().getHours()
+
+  if (hour >= 5 && hour < 12) return 'Good morning.'
+  if (hour >= 12 && hour < 17) return 'Good afternoon.'
+  if (hour >= 17 && hour < 21) return 'Good evening.'
+  return 'Good night.'
+}
+
 export default function Dashboard({
   tasks,
   workspaces,
@@ -58,7 +71,19 @@ export default function Dashboard({
   onToggleTask,
   onViewAll,
   onSelectWorkspace,
+  onNavigateCalendar,
 }: Props) {
+  const [greeting, setGreeting] = useState(getTimeBasedGreeting)
+
+  // Refresh periodically so the greeting also changes if the dashboard stays open.
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setGreeting(getTimeBasedGreeting())
+    }, 60_000)
+
+    return () => window.clearInterval(intervalId)
+  }, [])
+
   const completed = tasks.filter(
     (task) => task.status === 'Completed',
   ).length
@@ -84,16 +109,11 @@ export default function Dashboard({
     'Uncategorized'
 
   return (
-    <div className="app-shell mx-auto min-h-full max-w-[1500px] space-y-7 p-8">
+    <div className="app-shell min-h-full w-full space-y-7 p-4 sm:p-6 xl:p-8">
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-[var(--tn-primary)]">
-            <Sparkles size={14} />
-            YOUR PERSONAL COMMAND CENTER
-          </div>
-
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--tn-text)]">
-            Good evening.
+            {greeting}
           </h1>
 
           <p className="mt-1 text-sm text-[var(--tn-text-subtle)]">
@@ -103,46 +123,12 @@ export default function Dashboard({
 
         <button
           type="button"
-          className="flex items-center gap-2 rounded-lg border border-[var(--tn-border)] px-3 py-2 text-xs text-[var(--tn-text-muted)] hover:bg-[var(--tn-surface-muted)]"
+          onClick={onNavigateCalendar}
+          className="flex items-center gap-2 rounded-lg border border-[var(--tn-border)] px-3 py-2 text-xs text-[var(--tn-text-muted)] transition-colors hover:bg-[var(--tn-surface-muted)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tn-primary)]"
         >
           <CalendarDays size={14} />
           This week
         </button>
-      </section>
-
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Total tasks"
-          value={tasks.length}
-          note="Across all workspaces"
-          icon={ListTodo}
-          tone="primary"
-        />
-
-        <StatCard
-          label="Completed"
-          value={completed}
-          note="Tasks finished"
-          icon={CircleCheck}
-          tone="success"
-          trend="+2 this week"
-        />
-
-        <StatCard
-          label="In progress"
-          value={inProgress}
-          note="Currently working on"
-          icon={Activity}
-          tone="info"
-        />
-
-        <StatCard
-          label="To do"
-          value={pending}
-          note="Waiting to be started"
-          icon={Clock3}
-          tone="warning"
-        />
       </section>
 
       <section className="rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)] p-5">
@@ -163,37 +149,81 @@ export default function Dashboard({
 
         <div className="mt-5 flex h-2 overflow-hidden rounded-full bg-[var(--tn-surface-muted)]">
           <div
-            className="bg-emerald-400 transition-all"
+            className="transition-all"
             style={{
               width: `${tasks.length ? (completed / tasks.length) * 100 : 0}%`,
+              backgroundColor: 'var(--tn-status-completed)',
             }}
           />
-
           <div
-            className="bg-indigo-400 transition-all"
+            className="transition-all"
             style={{
               width: `${tasks.length ? (inProgress / tasks.length) * 100 : 0}%`,
+              backgroundColor: 'var(--tn-status-progress)',
+            }}
+          />
+          <div
+            className="transition-all"
+            style={{
+              width: `${tasks.length ? (pending / tasks.length) * 100 : 0}%`,
+              backgroundColor: 'var(--tn-status-todo)',
             }}
           />
         </div>
 
         <div className="mt-4 flex flex-wrap gap-5 text-[11px] text-[var(--tn-text-subtle)]">
           <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'var(--tn-status-completed)' }} />
             Completed ({completed})
           </span>
 
           <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-indigo-400" />
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'var(--tn-status-progress)' }} />
             In progress ({inProgress})
           </span>
 
           <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[var(--tn-border-strong)]" />
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'var(--tn-status-todo)' }} />
             To do ({pending})
           </span>
         </div>
       </section>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Total tasks"
+          value={tasks.length}
+          note="Across all workspaces"
+          icon={ListTodo}
+          tone="primary"
+        />
+
+        <StatCard
+          label="Completed"
+          value={completed}
+          note="Tasks finished"
+          icon={CircleCheck}
+          tone="success"
+        />
+
+        <StatCard
+          label="In progress"
+          value={inProgress}
+          note="Currently working on"
+          icon={Activity}
+          tone="info"
+        />
+
+        <StatCard
+          label="To do"
+          value={pending}
+          note="Waiting to be started"
+          icon={Clock3}
+          tone="warning"
+        />
+      </section>
+
+      <GraphCards tasks={tasks} categories={categories} />
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.6fr_1fr]">
         <div className="overflow-hidden rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)]">
@@ -234,7 +264,7 @@ export default function Dashboard({
                   title="Toggle completion"
                   className={`flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-full border transition ${
                     task.status === 'Completed'
-                      ? 'border-emerald-400 bg-emerald-400 text-white'
+                      ? 'border-[var(--tn-status-completed)] bg-[var(--tn-status-completed)] text-white'
                       : 'border-[var(--tn-border-strong)] text-transparent hover:border-[var(--tn-primary)]'
                   }`}
                 >
@@ -353,10 +383,6 @@ export default function Dashboard({
         </div>
       </section>
 
-      <footer className="flex items-center justify-between border-t border-[var(--tn-border)] pt-4 text-[10px] text-[var(--tn-text-subtle)]">
-        <span>TaskNest · Your personal productivity space</span>
-        <span>Frontend preview · v0.1</span>
-      </footer>
     </div>
   )
 }

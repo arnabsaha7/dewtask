@@ -51,7 +51,7 @@ const columns: {
     status: 'In Progress',
     label: 'In Progress',
     icon: Clock3,
-    color: 'text-blue-400',
+    color: 'text-[var(--tn-primary)]',
   },
   {
     status: 'Completed',
@@ -234,29 +234,12 @@ export default function KanbanBoard({
     (column) => settings.showCompletedTasks || column.status !== 'Completed'
   )
 
-  // Page title
-  const title = selectedCategoryId
-    ? categories.find(
-        (category) => category.id === selectedCategoryId
-      )?.name ?? 'Category Tasks'
-    : activeNav
-
   return (
     <div className="min-w-0 flex-1 p-6 lg:p-8">
       {/* Board header */}
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="mb-2 flex items-center gap-2 text-sm text-[var(--tn-text-subtle)]">
-            <span>Tasks</span>
-            <span>/</span>
-            <span>Board</span>
-          </div>
-
-          <h1 className="text-2xl font-semibold text-[var(--tn-text)]">
-            {title}
-          </h1>
-
-          <p className="mt-1 text-sm text-[var(--tn-text-muted)]">
+          <p className="text-sm text-[var(--tn-text-muted)]">
             {filteredTasks.length} tasks across {visibleColumns.length} statuses
           </p>
         </div>
@@ -273,7 +256,7 @@ export default function KanbanBoard({
             <button
               type="button"
               onClick={onManageTags}
-              className="flex items-center gap-2 rounded-lg border border-[var(--tn-border)] px-3 py-2 text-sm text-[var(--tn-text-muted)] transition hover:border-indigo-500/40 hover:bg-[var(--tn-primary)]/10 hover:text-indigo-300"
+              className="flex items-center gap-2 rounded-lg border border-[var(--tn-border)] px-3 py-2 text-sm text-[var(--tn-text-muted)] transition hover:border-[var(--tn-primary)]/50 hover:bg-[var(--tn-primary-soft)] hover:text-[var(--tn-text)]"
             >
               <TagIcon size={15} />
               Manage Tags
@@ -324,7 +307,7 @@ export default function KanbanBoard({
               }}
               className={`min-h-[420px] rounded-xl border p-3 transition ${
                 isDropTarget
-                  ? 'border-indigo-400/60 bg-[var(--tn-primary)]/[0.06]'
+                  ? 'border-[var(--tn-primary)]/60 bg-[var(--tn-primary-soft)]'
                   : 'border-[var(--tn-border)] bg-[var(--tn-surface)]'
               }`}
             >
@@ -390,7 +373,7 @@ export default function KanbanBoard({
                       <button
                         type="button"
                         onClick={() => onSelectTask(task)}
-                        className={`mb-2 block w-full text-left text-sm font-medium transition hover:text-indigo-400 ${
+                        className={`mb-2 block w-full text-left text-sm font-medium transition hover:text-[var(--tn-primary)] ${
                           task.status === 'Completed'
                             ? 'text-[var(--tn-text-subtle)] line-through'
                             : 'text-[var(--tn-text)]'

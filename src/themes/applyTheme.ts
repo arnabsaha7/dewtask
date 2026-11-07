@@ -57,6 +57,26 @@ export function applyTheme(themeId: string, systemPrefersDark = false) {
     '--tn-nav-icon': selected.colors.navIcon,
   }
 
+  const semanticStatus = selected.mode === 'dark'
+    ? {
+        '--tn-status-completed': '#6EE7B7',
+        '--tn-status-completed-soft': 'rgba(16, 185, 129, 0.16)',
+        '--tn-status-progress': '#7DD3FC',
+        '--tn-status-progress-soft': 'rgba(14, 165, 233, 0.17)',
+        '--tn-status-todo': '#FCD34D',
+        '--tn-status-todo-soft': 'rgba(245, 158, 11, 0.17)',
+      }
+    : {
+        '--tn-status-completed': '#047857',
+        '--tn-status-completed-soft': '#D1FAE5',
+        '--tn-status-progress': '#1D4ED8',
+        '--tn-status-progress-soft': '#DBEAFE',
+        '--tn-status-todo': '#92400E',
+        '--tn-status-todo-soft': '#FEF3C7',
+      }
+
+  Object.assign(vars, semanticStatus)
+
   for (const [name, value] of Object.entries(vars)) {
     root.style.setProperty(name, value)
   }

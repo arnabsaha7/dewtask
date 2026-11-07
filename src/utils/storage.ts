@@ -10,6 +10,7 @@ export type StorageKey =
   | 'tasknest_tags'
   | 'tasknest_workspaces'
   | 'tasknest_settings'
+  | 'tasknest_notifications'
 
 export interface StorageDriver {
   get<T>(key: StorageKey): Promise<T | null>
@@ -29,6 +30,7 @@ const STORAGE_KEYS: StorageKey[] = [
   'tasknest_tags',
   'tasknest_tasks',
   'tasknest_settings',
+  'tasknest_notifications',
 ]
 
 let databasePromise: Promise<IDBDatabase> | null = null

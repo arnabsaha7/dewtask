@@ -101,11 +101,13 @@ export default function TaskDetailsDrawer({
   const [priority, setPriority] = useState<TaskPriority>(task.priority)
   const [status, setStatus] = useState<TaskStatus>(task.status)
   const [dueDate, setDueDate] = useState(task.dueDate ?? '')
+  const [reminderAt, setReminderAt] = useState(toLocalDateTimeInput(task.reminderAt))
   const [autoProgressionEnabled, setAutoProgressionEnabled] = useState(task.autoProgressionEnabled ?? false)
   const [scheduleType, setScheduleType] = useState<'duration' | 'end'>('end')
   const [durationHours, setDurationHours] = useState('1')
+  const [autoStartAt, setAutoStartAt] = useState(() => toLocalDateTimeInput(task.autoProgressionStartAt) || toLocalDateTimeInput(new Date().toISOString()))
   const [autoEndAt, setAutoEndAt] = useState(toLocalDateTimeInput(task.autoProgressionEndAt))
-  const [clockNow, setClockNow] = useState(Date.now())
+  const [clockNow, setClockNow] = useState(() => Date.now())
   const [checklist, setChecklist] = useState<ChecklistItem[]>(
     task.checklist ?? []
   )
@@ -136,7 +138,9 @@ export default function TaskDetailsDrawer({
     setPriority(task.priority)
     setStatus(task.status)
     setDueDate(task.dueDate ?? '')
+    setReminderAt(toLocalDateTimeInput(task.reminderAt))
     setAutoProgressionEnabled(task.autoProgressionEnabled ?? false)
+    setAutoStartAt(toLocalDateTimeInput(task.autoProgressionStartAt) || toLocalDateTimeInput(new Date().toISOString()))
     setAutoEndAt(toLocalDateTimeInput(task.autoProgressionEndAt))
     setScheduleType('end')
     setDurationHours('1')
@@ -227,15 +231,24 @@ export default function TaskDetailsDrawer({
     )
 
     const now = new Date()
+    const progressionStartValue = autoProgressionEnabled
+      ? scheduleType === 'duration'
+        ? now
+        : new Date(autoStartAt)
+      : null
     const progressionEndValue = autoProgressionEnabled
       ? scheduleType === 'duration'
         ? new Date(now.getTime() + Number(durationHours) * 60 * 60 * 1000)
         : new Date(autoEndAt)
       : null
-    if (autoProgressionEnabled && (!progressionEndValue || !Number.isFinite(progressionEndValue.getTime()) || progressionEndValue.getTime() <= now.getTime() || (scheduleType === 'duration' && (!Number.isFinite(Number(durationHours)) || Number(durationHours) <= 0)))) return
+    if (autoProgressionEnabled && (
+      !progressionStartValue || !Number.isFinite(progressionStartValue.getTime()) ||
+      !progressionEndValue || !Number.isFinite(progressionEndValue.getTime()) ||
+      progressionEndValue.getTime() <= progressionStartValue.getTime() ||
+      (scheduleType === 'duration' && (!Number.isFinite(Number(durationHours)) || Number(durationHours) <= 0))
+    )) return
 
-    const scheduleChanged = autoProgressionEnabled !== (task.autoProgressionEnabled ?? false) ||
-      (autoProgressionEnabled && progressionEndValue?.toISOString() !== task.autoProgressionEndAt)
+
 
     onSave(task.id, {
       title: trimmedTitle,
@@ -245,10 +258,9 @@ export default function TaskDetailsDrawer({
       priority,
       status,
       dueDate: dueDate || null,
+      reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
       autoProgressionEnabled,
-      autoProgressionStartAt: autoProgressionEnabled
-        ? (scheduleChanged ? now.toISOString() : task.autoProgressionStartAt ?? now.toISOString())
-        : null,
+      autoProgressionStartAt: progressionStartValue?.toISOString() ?? null,
       autoProgressionEndAt: progressionEndValue?.toISOString() ?? null,
       checklist,
       tagIds: validTagIds,
@@ -528,6 +540,21 @@ export default function TaskDetailsDrawer({
               />
             </div>
 
+            {/* Optional one-off reminder */}
+            <div>
+              <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-[var(--tn-text-subtle)]">
+                Reminder (optional)
+              </label>
+              <input
+                type="datetime-local"
+                value={reminderAt}
+                min={(() => { const now = new Date(clockNow); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); return now.toISOString().slice(0, 16) })()}
+                onChange={(event) => setReminderAt(event.target.value)}
+                className="w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-4 py-3 text-sm text-[var(--tn-text)] outline-none focus:border-[var(--tn-primary)]"
+              />
+              <p className="mt-1.5 text-xs text-[var(--tn-text-subtle)]">Leave empty to remove this task's individual reminder.</p>
+            </div>
+
             {/* Automatic progression */}
             <section className="rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] p-4">
               <label className="flex cursor-pointer items-start gap-3">
@@ -538,19 +565,40 @@ export default function TaskDetailsDrawer({
                 </span>
               </label>
               {autoProgressionEnabled && (
-                <div className="mt-4 space-y-3 border-t border-[var(--tn-border)] pt-4">
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => setScheduleType('duration')} className={`rounded-lg border px-3 py-2 text-xs ${scheduleType === 'duration' ? 'border-[var(--tn-primary)] text-[var(--tn-primary)]' : 'border-[var(--tn-border)] text-[var(--tn-text-muted)]'}`}>Duration from save</button>
-                    <button type="button" onClick={() => setScheduleType('end')} className={`rounded-lg border px-3 py-2 text-xs ${scheduleType === 'end' ? 'border-[var(--tn-primary)] text-[var(--tn-primary)]' : 'border-[var(--tn-border)] text-[var(--tn-text-muted)]'}`}>End date &amp; time</button>
+                <div className="mt-4 border-t border-[var(--tn-border)] pt-4">
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--tn-text-subtle)]">Schedule type</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl bg-[var(--tn-surface)] p-1">
+                      <button type="button" onClick={() => setScheduleType('duration')} className={`rounded-lg px-3 py-2.5 text-xs font-medium transition ${scheduleType === 'duration' ? 'bg-[var(--tn-primary)] text-white shadow-sm' : 'text-[var(--tn-text-muted)] hover:bg-[var(--tn-surface-hover)]'}`}>Duration from save</button>
+                      <button type="button" onClick={() => setScheduleType('end')} className={`rounded-lg px-3 py-2.5 text-xs font-medium transition ${scheduleType === 'end' ? 'bg-[var(--tn-primary)] text-white shadow-sm' : 'text-[var(--tn-text-muted)] hover:bg-[var(--tn-surface-hover)]'}`}>Set start &amp; end</button>
+                    </div>
                   </div>
                   {scheduleType === 'duration' ? (
-                    <label className="block text-xs text-[var(--tn-text-muted)]">Duration (hours)
-                      <input type="number" min="0.01" step="0.25" required={autoProgressionEnabled} value={durationHours} onChange={(event) => setDurationHours(event.target.value)} className="mt-2 w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-3 py-2.5 text-sm text-[var(--tn-text)] outline-none focus:border-[var(--tn-primary)]" />
-                    </label>
+                    <div className="rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)] p-3">
+                      <label className="block text-xs font-medium text-[var(--tn-text-muted)]">Duration (hours)
+                        <input type="number" min="0.01" step="any" required={autoProgressionEnabled} value={durationHours} onChange={(event) => setDurationHours(event.target.value)} className="mt-2 w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-3 py-3 text-sm text-[var(--tn-text)] outline-none transition focus:border-[var(--tn-primary)] focus:ring-2 focus:ring-[var(--tn-primary)]/15" />
+                      </label>
+                      <p className="mt-2 text-xs text-[var(--tn-text-subtle)]">The countdown begins as soon as you save this task.</p>
+                    </div>
                   ) : (
-                    <label className="block text-xs text-[var(--tn-text-muted)]">End date &amp; time
-                      <input type="datetime-local" required={autoProgressionEnabled} min={new Date().toISOString().slice(0, 16)} value={autoEndAt} onChange={(event) => setAutoEndAt(event.target.value)} className="mt-2 w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-3 py-2.5 text-sm text-[var(--tn-text)] outline-none focus:border-[var(--tn-primary)]" />
-                    </label>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <label className="block rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)] p-3 text-xs font-medium text-[var(--tn-text-muted)]">
+                          <span className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--tn-primary)]/10 text-[var(--tn-primary)]">1</span>Start date &amp; time</span>
+                          <input type="datetime-local" required={autoProgressionEnabled} value={autoStartAt} onChange={(event) => setAutoStartAt(event.target.value)} className="mt-3 w-full min-w-0 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-3 py-3 text-sm font-normal text-[var(--tn-text)] outline-none transition focus:border-[var(--tn-primary)] focus:ring-2 focus:ring-[var(--tn-primary)]/15" />
+                          <span className="mt-2 block text-[11px] font-normal text-[var(--tn-text-subtle)]">When the timer begins</span>
+                        </label>
+                        <label className="block rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)] p-3 text-xs font-medium text-[var(--tn-text-muted)]">
+                          <span className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--tn-primary)]/10 text-[var(--tn-primary)]">2</span>End date &amp; time</span>
+                          <input type="datetime-local" required={autoProgressionEnabled} min={autoStartAt || undefined} value={autoEndAt} onChange={(event) => setAutoEndAt(event.target.value)} className="mt-3 w-full min-w-0 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-3 py-3 text-sm font-normal text-[var(--tn-text)] outline-none transition focus:border-[var(--tn-primary)] focus:ring-2 focus:ring-[var(--tn-primary)]/15" />
+                          <span className="mt-2 block text-[11px] font-normal text-[var(--tn-text-subtle)]">Task completes automatically</span>
+                        </label>
+                      </div>
+                      <div className="flex items-start gap-2 rounded-lg bg-[var(--tn-primary)]/5 px-3 py-2.5 text-xs text-[var(--tn-text-muted)]">
+                        <CalendarDays size={15} className="mt-0.5 shrink-0 text-[var(--tn-primary)]" />
+                        <span>The countdown runs between these two times. The task will be marked complete when the end time is reached.</span>
+                      </div>
+                    </div>
                   )}
                   {task.autoProgressionEnabled && task.status !== 'Completed' && progressionEnd !== null && progressionStart !== null && (
                     <div className="rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] p-3">
@@ -714,7 +762,7 @@ export default function TaskDetailsDrawer({
                   !categoryId ||
                   (autoProgressionEnabled && (scheduleType === 'duration'
                     ? !Number.isFinite(Number(durationHours)) || Number(durationHours) <= 0
-                    : !autoEndAt || new Date(autoEndAt).getTime() <= Date.now()))
+                    : !autoEndAt || new Date(autoEndAt).getTime() <= clockNow))
                 }
                 className="flex items-center gap-2 rounded-lg bg-[var(--tn-primary)] text-white px-4 py-2 text-sm font-medium hover:bg-[var(--tn-primary-hover)] disabled:opacity-40"
               >

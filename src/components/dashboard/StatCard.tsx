@@ -27,26 +27,33 @@ export default function StatCard({
 }: Props) {
   return (
     <article className="stat-card rounded-xl border p-5 transition-colors">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-[var(--tn-text-muted)]">{label}</span>
-        <span className={`stat-icon flex h-9 w-9 items-center justify-center rounded-lg ${toneClasses[tone]}`}>
-          <Icon size={17} aria-hidden="true" />
-        </span>
-      </div>
-
-      <div className="mt-4 flex items-end justify-between gap-3">
-        <span className="text-2xl font-semibold tracking-tight text-[var(--tn-text)]">
-          {value}
-        </span>
-        {trend && (
-          <span className="flex items-center gap-1 text-[10px] font-medium text-[var(--tn-success)]">
-            <ArrowUpRight size={12} aria-hidden="true" />
-            {trend}
+      <dl className="flex min-h-[132px] flex-col">
+        <div className="flex items-start justify-between gap-3">
+          <dt className="pt-1 text-sm font-medium leading-5 text-[var(--tn-text-muted)]">
+            {label}
+          </dt>
+          <span
+            aria-hidden="true"
+            className={`stat-icon flex size-9 shrink-0 items-center justify-center rounded-lg ${toneClasses[tone]}`}
+          >
+            <Icon size={17} />
           </span>
-        )}
-      </div>
+        </div>
 
-      <p className="mt-1 text-[11px] text-[var(--tn-text-muted)]">{note}</p>
+        <dd className="mt-1 text-3xl font-semibold leading-tight tracking-tight tabular-nums text-[var(--tn-text)]">
+          {value.toLocaleString()}
+        </dd>
+
+        <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-3">
+          <p className="text-xs leading-4 text-[var(--tn-text-muted)]">{note}</p>
+          {trend && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[var(--tn-success)]">
+              <ArrowUpRight size={12} aria-hidden="true" />
+              {trend}
+            </span>
+          )}
+        </div>
+      </dl>
     </article>
   )
 }

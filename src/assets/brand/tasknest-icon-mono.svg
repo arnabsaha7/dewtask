@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 300" width="320" height="300" fill="none">
+  <defs>
+    <!-- Editable Checkmark Knockout Mask for Single-Colour Monochrome Fidelity -->
+    <mask id="checkmark-knockout">
+      <rect x="0" y="0" width="320" height="300" fill="#FFFFFF" />
+      <path id="checkmark" fill="#000000" d="
+        M 161.8 153.2
+        C 159.5 153.2, 157.3 152.3, 155.6 150.6
+        L 138.2 133.2
+        C 134.8 129.8, 134.8 124.2, 138.2 120.8
+        C 141.6 117.4, 147.2 117.4, 150.6 120.8
+        L 161.8 132.0
+        L 191.4 100.4
+        C 194.7 96.9, 200.3 96.8, 203.8 100.1
+        C 207.3 103.4, 207.4 109.0, 204.1 112.5
+        L 168.2 150.5
+        C 166.5 152.2, 164.2 153.2, 161.8 153.2
+        Z
+      " />
+    </mask>
+  </defs>
+
+  <g id="tasknest-icon-mono" transform="translate(-8, 0)" fill="#262D2F">
+    <!-- Three Rays -->
+    <g id="rays" stroke="#262D2F" stroke-width="11.5" stroke-linecap="round">
+      <path id="ray-1" d="M 237.5 45.5 L 248.5 23.5" />
+      <path id="ray-2" d="M 259.5 60.0 L 279.0 41.5" />
+      <path id="ray-3" d="M 269.5 83.0 L 294.5 76.5" />
+    </g>
+
+    <!-- Monochrome Circle with Editable Checkmark Mask -->
+    <path id="circle" mask="url(#checkmark-knockout)" d="
+      M 90.2 135.5
+      A 80.0 80.0 0 1 1 249.8 134.0
+      C 226.0 151.5, 198.5 169.5, 168.5 185.8
+      C 141.0 171.0, 114.5 153.5, 90.2 135.5
+      Z
+    " />
+
+    <!-- Monochrome Nest Elements -->
+    <g id="nest">
+      <path id="nest-right-leaf" d="
+        M 179.5 196.2
+        C 218.0 176.5, 256.5 153.5, 294.5 133.0
+        C 302.5 128.6, 310.2 133.8, 308.8 143.2
+        C 305.8 166.8, 296.2 194.5, 282.5 215.2
+        C 279.8 218.5, 274.5 219.2, 267.5 219.2
+        C 237.5 219.0, 207.0 209.8, 179.5 196.2
+        Z
+      " />
+      <path id="nest-left-cradle" d="
+        M 26.2 142.5
+        C 25.0 132.8, 33.2 128.2, 41.8 133.2
+        C 86.5 159.2, 134.5 189.2, 184.5 210.8
+        C 214.5 223.8, 244.2 229.0, 274.2 228.5
+        C 252.0 261.8, 212.5 281.0, 167.5 281.0
+        C 93.5 281.0, 34.2 221.5, 26.2 142.5
+        Z
+      " />
+    </g>
+  </g>
+</svg>

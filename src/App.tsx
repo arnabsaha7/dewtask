@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import Sidebar from './components/layout/Sidebar'
 import Header from './components/layout/Header'
@@ -6,7 +6,6 @@ import Header from './components/layout/Header'
 import Dashboard from './components/dashboard/Dashboard'
 
 import CreateTaskModal from './components/tasks/CreateTaskModal'
-import SearchModal from './components/common/SearchModal'
 import TaskDetailsDrawer from './components/tasks/TaskDetailsDrawer'
 
 import CategoryManager from './components/CategoryManager'
@@ -14,9 +13,15 @@ import TagManager from './components/tags/TagManager'
 import Settings from './components/settings/Settings'
 
 import WorkspacePage from './components/workspace/WorkspacePage'
+import WorkspaceEditorModal from './components/workspace/WorkspaceEditorModal'
+import type { WorkspaceFormData } from './components/workspace/WorkspaceEditorModal'
 import WorkspaceExplorer from './components/workspace/WorkspaceExplorer'
 import TaskList from './components/tasks/TaskList'
 import KanbanBoard from './components/tasks/KanbanBoard'
+import CalendarPage from './components/calendar/CalendarPage'
+import NotificationsCenter from './components/notifications/NotificationsCenter'
+import { usePersistentValue } from './hooks/usePersistentValue'
+import { useNotificationScheduler, type TaskNotification } from './hooks/useNotificationScheduler'
 
 import { buildCategoryTree } from './utils/categories'
 
@@ -66,6 +71,7 @@ function App() {
     updateTask,
     toggleTask,
     deleteTask,
+    isHydrated: tasksHydrated,
   } = useTasks()
 
   // --------------------------------------------------
@@ -98,20 +104,24 @@ function App() {
     'Clash of Clans',
     'Engineering',
   ])
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // --------------------------------------------------
   // View state
   // --------------------------------------------------
 
-  const [viewMode, setViewMode] = useState<'list' | 'board'>(
-    settings.defaultView,
-  )
-
-  // Keep the active view synchronized when the default
-  // view changes in Settings.
-  useEffect(() => {
-    setViewMode(settings.defaultView)
-  }, [settings.defaultView])
+  const [viewState, setViewState] = useState(() => ({
+    defaultView: settings.defaultView,
+    selectedView: settings.defaultView,
+  }))
+  // A changed default view takes effect unless the user selects a view
+  // after that setting was last applied.
+  const viewMode = viewState.defaultView === settings.defaultView
+    ? viewState.selectedView
+    : settings.defaultView
+  const setViewMode = (mode: 'list' | 'board') => {
+    setViewState({ defaultView: settings.defaultView, selectedView: mode })
+  }
 
   // --------------------------------------------------
   // Modal state
@@ -124,13 +134,43 @@ function App() {
     useState<string | null>(null)
 
   const [newTaskOpen, setNewTaskOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [newWorkspaceOpen, setNewWorkspaceOpen] = useState(false)
+  const [calendarInitialDate, setCalendarInitialDate] = useState<string | null>(null)
+  const [calendarWeekRequest, setCalendarWeekRequest] = useState(0)
+  const [calendarScheduledStart, setCalendarScheduledStart] = useState<string | null>(null)
+  const [calendarScheduledEnd, setCalendarScheduledEnd] = useState<string | null>(null)
 
   // --------------------------------------------------
   // Selected task for details drawer
   // --------------------------------------------------
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const pendingNotificationTaskId = useRef<string | null>(null)
+  const [notifications, setNotifications, notificationsHydrated] = usePersistentValue<TaskNotification[]>('tasknest_notifications', [])
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  useNotificationScheduler(tasks, settings, notifications, setNotifications, tasksHydrated && notificationsHydrated)
+  const hasUnreadNotifications = useMemo(() => notifications.some((item) => !item.readAt), [notifications])
+
+  useEffect(() => {
+    const handleNotificationTask = (event: Event) => {
+      const taskId = (event as CustomEvent<{ taskId?: string }>).detail?.taskId
+      if (!taskId) return
+      const task = tasks.find((item) => item.id === taskId)
+      if (task) setSelectedTask(task)
+      else pendingNotificationTaskId.current = taskId
+    }
+    window.addEventListener('tasknest:open-task', handleNotificationTask)
+    return () => window.removeEventListener('tasknest:open-task', handleNotificationTask)
+  }, [tasks])
+
+  useEffect(() => {
+    const pendingId = pendingNotificationTaskId.current
+    if (!pendingId) return
+    const task = tasks.find((item) => item.id === pendingId)
+    if (!task) return
+    setSelectedTask(task)
+    pendingNotificationTaskId.current = null
+  }, [tasks])
 
   // --------------------------------------------------
   // Tag operations
@@ -165,6 +205,16 @@ function App() {
     setSelectedCategoryId(null)
     setSelectedWorkspaceId(null)
     setSelectedTagIds([])
+  }
+
+  const handleNavigateCalendar = () => {
+    setSelectedCategoryId(null)
+    setSelectedWorkspaceId(null)
+    setSelectedTagIds([])
+    setActiveNav('Calendar')
+    // Remount the calendar so its cursor and selected date reset to today,
+    // with the calendar's default Week view active.
+    setCalendarWeekRequest((current) => current + 1)
   }
 
   const handleSelectWorkspace = (workspace: Workspace) => {
@@ -326,25 +376,26 @@ function App() {
 
     if (!workspace) return
 
-    const hasCategories = categories.some(
-      (category) => category.workspaceId === id,
+    // Deleting a workspace also permanently removes everything it owns.
+    // Remove tasks first so task hooks can perform their normal cleanup.
+    const workspaceTasks = tasks.filter((task) => task.workspaceId === id)
+    workspaceTasks.forEach((task) => deleteTask(task.id))
+
+    // Categories include every level of the workspace folder hierarchy.
+    setCategories((current) =>
+      current.filter((category) => category.workspaceId !== id),
     )
 
-    const hasTasks = tasks.some(
-      (task) => task.workspaceId === id,
-    )
-
-    if (hasCategories || hasTasks) {
-      window.alert(
-        'This workspace cannot be deleted because it still contains categories or tasks. Delete or move them first.',
-      )
-      return
-    }
-
-    // Remove tags belonging to this workspace.
+    // Remove tags belonging to this workspace and clear selected tag filters.
     tags
       .filter((tag) => tag.workspaceId === id)
       .forEach((tag) => handleDeleteTag(tag.id))
+
+    // Close the task details drawer if it was showing a task being deleted.
+    const deletedTaskIds = new Set(workspaceTasks.map((task) => task.id))
+    setSelectedTask((current) =>
+      current && deletedTaskIds.has(current.id) ? null : current,
+    )
 
     setWorkspaces((current) =>
       current.filter((item) => item.id !== id),
@@ -457,11 +508,28 @@ function App() {
     priority: 'Critical' | 'High' | 'Medium' | 'Low'
     status: 'To Do' | 'In Progress' | 'Completed'
     dueDate: string | null
+    reminderAt?: string | null
+    scheduledStart?: string | null
+    scheduledEnd?: string | null
     autoProgressionEnabled: boolean
     autoProgressionStartAt: string | null
     autoProgressionEndAt: string | null
   }) => {
     addTask(input)
+  }
+
+  const openCalendarTask = (date: string, scheduledStart?: string | null, scheduledEnd?: string | null) => {
+    setCalendarInitialDate(date)
+    setCalendarScheduledStart(scheduledStart ?? null)
+    setCalendarScheduledEnd(scheduledEnd ?? null)
+    setNewTaskOpen(true)
+  }
+
+  const closeNewTask = () => {
+    setNewTaskOpen(false)
+    setCalendarInitialDate(null)
+    setCalendarScheduledStart(null)
+    setCalendarScheduledEnd(null)
   }
 
   // --------------------------------------------------
@@ -522,8 +590,8 @@ function App() {
   // --------------------------------------------------
 
   return (
-    <div className="app-shell flex min-h-screen">
-      {/* Sidebar */}
+    <div className="app-shell flex h-dvh min-h-0 w-full overflow-hidden">
+      {/* Full-height sidebar occupies the left edge of the application. */}
       <Sidebar
         workspaces={categoryTrees}
         selectedCategoryId={selectedCategoryId}
@@ -532,23 +600,37 @@ function App() {
         onSelectWorkspace={handleSelectWorkspace}
         onSelectCategory={handleSelectCategory}
         onManageCategories={setManagerWorkspaceId}
-        onCreateWorkspace={createWorkspace}
         onUpdateWorkspace={updateWorkspace}
         onDeleteWorkspace={deleteWorkspace}
         expanded={expanded}
         onToggleExpanded={toggleExpanded}
+        collapsed={sidebarCollapsed}
+        onToggleSidebar={() => setSidebarCollapsed((current) => !current)}
       />
 
-      {/* Main content */}
-      <main className="app-shell ml-[260px] min-h-screen flex-1">
+      {/* Header and page content begin to the right of the sidebar. */}
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <Header
           title={activeNav}
-          onSearch={() => setSearchOpen(true)}
           onNewTask={() => setNewTaskOpen(true)}
+          onNewWorkspace={() => setNewWorkspaceOpen(true)}
+          onNotifications={() => setNotificationsOpen((open) => !open)}
+          hasUnread={hasUnreadNotifications}
         />
-
-        {/* Settings */}
-        {activeNav === 'Settings' ? (
+        <main className="app-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-[var(--tn-bg)] text-[var(--tn-text)]">
+        {/* Calendar */}
+        {activeNav === 'Calendar' ? (
+          <CalendarPage
+            key={calendarWeekRequest}
+            tasks={tasks}
+            workspaces={workspaces}
+            categories={categories}
+            onSelectTask={setSelectedTask}
+            onUpdateTask={updateTask}
+            onToggleTask={toggleTask}
+            onCreateTask={openCalendarTask}
+          />
+        ) : activeNav === 'Settings' ? (
           <Settings
             settings={settings}
             updateSetting={updateSetting}
@@ -564,6 +646,7 @@ function App() {
             onToggleTask={toggleTask}
             onViewAll={() => handleNavigate('All Tasks')}
             onSelectWorkspace={handleSelectWorkspace}
+            onNavigateCalendar={handleNavigateCalendar}
           />
         ) : activeNav === 'Workspace' &&
           !selectedCategoryId &&
@@ -571,8 +654,8 @@ function App() {
           <WorkspacePage
             workspaces={workspaces}
             tasks={tasks}
+            categories={categories}
             onSelectWorkspace={handleSelectWorkspace}
-            onCreateWorkspace={createWorkspace}
             onUpdateWorkspace={updateWorkspace}
             onDeleteWorkspace={deleteWorkspace}
           />
@@ -584,7 +667,7 @@ function App() {
             tasks={tasks}
             categories={categories}
             onViewModeChange={handleWorkspaceContentModeChange}
-            onCreateTask={() => setNewTaskOpen(true)}
+            onBackToWorkspaces={() => handleNavigate('Workspace')}
             onManageCategories={() =>
               setManagerWorkspaceId(selectedWorkspaceId)
             }
@@ -680,22 +763,44 @@ function App() {
             onManageTags={handleManageTags}
           />
         )}
-      </main>
+        </main>
+      </div>
+
+      <NotificationsCenter
+        open={notificationsOpen}
+        notifications={notifications}
+        onClose={() => setNotificationsOpen(false)}
+        onMarkRead={(id) => setNotifications((current) => current.map((item) => item.id === id ? { ...item, readAt: new Date().toISOString() } : item))}
+        onMarkAllRead={() => setNotifications((current) => current.map((item) => item.readAt ? item : { ...item, readAt: new Date().toISOString() }))}
+        onSelectTask={(taskId) => {
+          const task = tasks.find((item) => item.id === taskId)
+          if (task) setSelectedTask(task)
+          setNotificationsOpen(false)
+        }}
+      />
 
       {/* Create task modal */}
       <CreateTaskModal
         open={newTaskOpen}
         workspaces={workspaces}
         categories={categories}
-        onClose={() => setNewTaskOpen(false)}
+        initialDate={calendarInitialDate}
+        initialScheduledStart={calendarScheduledStart}
+        initialScheduledEnd={calendarScheduledEnd}
+        onClose={closeNewTask}
         onCreate={handleCreateTask}
       />
 
-      {/* Search modal */}
-      <SearchModal
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
+      {/* Global create-workspace modal, opened from the header Create menu. */}
+      {newWorkspaceOpen && (
+        <WorkspaceEditorModal
+          onClose={() => setNewWorkspaceOpen(false)}
+          onSave={(data: WorkspaceFormData) => {
+            createWorkspace(data)
+            setNewWorkspaceOpen(false)
+          }}
+        />
+      )}
 
       {/* Category manager */}
       {managerWorkspace && (

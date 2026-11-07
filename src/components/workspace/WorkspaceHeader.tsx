@@ -1,6 +1,5 @@
 import {
   ListTodo,
-  Plus,
   Tag as TagIcon,
 } from 'lucide-react'
 
@@ -19,7 +18,6 @@ export default function WorkspaceHeader({
   viewMode,
   onViewModeChange,
   onManageTags,
-  onCreateTask,
   showManageTags,
 }: WorkspaceHeaderProps) {
   return (
@@ -65,15 +63,6 @@ export default function WorkspaceHeader({
           viewMode={viewMode}
           onChange={onViewModeChange}
         />
-
-        <button
-          type="button"
-          onClick={onCreateTask}
-          className="inline-flex items-center gap-2 rounded-xl bg-[var(--tn-primary)] px-3.5 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--tn-primary-hover)]"
-        >
-          <Plus size={16} />
-          New task
-        </button>
       </div>
     </header>
   )

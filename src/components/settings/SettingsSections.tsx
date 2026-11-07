@@ -5,8 +5,8 @@ import type { ChangeEvent, ReactNode } from 'react'
 import {
 
   Download, Upload, Trash2, AlertTriangle,
-
   HardDrive, ShieldCheck, Bell, Settings as SettingsIcon,
+  Folder, Tags, Layers, SlidersHorizontal, ListTodo,
 
 } from 'lucide-react'
 
@@ -21,9 +21,11 @@ import {
 } from '../../hooks/useSettings'
 
 import { themes, SYSTEM_THEME_ID } from '../../themes/registry'
+import { Capacitor } from '@capacitor/core'
+import { LocalNotifications } from '@capacitor/local-notifications'
 import { clearStorage, readAllStorage, replaceAllStorage, storageRecordExists, type StorageKey } from '../../utils/storage'
 
-type Section = 'general' | 'tasks' | 'notifications' | 'data' | 'about'
+type Section = 'general' | 'appearance' | 'tasks' | 'notifications' | 'data' | 'about'
 
 type UpdateSetting = <K extends keyof TaskNestSettings>(
 
@@ -115,9 +117,31 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
   const [importError, setImportError] = useState('')
   const [storageStatus, setStorageStatus] = useState<Record<string, boolean>>({})
+  const [notificationPermission, setNotificationPermission] = useState<string>(() => typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported')
+  useEffect(() => {
+    if (section !== 'notifications') return
+    let cancelled = false
+    const refreshPermission = async () => {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const permission = await LocalNotifications.checkPermissions()
+          if (!cancelled) setNotificationPermission(permission.display)
+        } else if (typeof window !== 'undefined' && 'Notification' in window) {
+          setNotificationPermission(Notification.permission)
+        } else {
+          setNotificationPermission('unsupported')
+        }
+      } catch {
+        if (!cancelled) setNotificationPermission('unsupported')
+      }
+    }
+    void refreshPermission()
+    return () => { cancelled = true }
+  }, [section])
+
   useEffect(() => {
     let cancelled = false
-    const keys: StorageKey[] = [...DATA_KEYS, SETTINGS_STORAGE_KEY]
+    const keys: StorageKey[] = [...DATA_KEYS, SETTINGS_STORAGE_KEY, 'tasknest_notifications']
     Promise.all(keys.map(async (key) => [key, await storageRecordExists(key)] as const))
       .then((entries) => { if (!cancelled) setStorageStatus(Object.fromEntries(entries)) })
       .catch((error) => console.error('Could not inspect local storage:', error))
@@ -136,6 +160,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
         tasknest_tags: stored.tasknest_tags ?? [],
         tasknest_workspaces: stored.tasknest_workspaces ?? [],
         tasknest_settings: stored.tasknest_settings ?? DEFAULT_SETTINGS,
+        tasknest_notifications: stored.tasknest_notifications ?? [],
       }
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
@@ -195,6 +220,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
         tasknest_tags: backup.tasknest_tags,
         tasknest_workspaces: backup.tasknest_workspaces,
         tasknest_settings: restoredSettings,
+        tasknest_notifications: Array.isArray(backup.tasknest_notifications) ? backup.tasknest_notifications : [],
       })
 
       onNotice('Backup restored. Reloading TaskNest...')
@@ -215,7 +241,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
   const clearData = async () => {
 
-    if (!window.confirm('Permanently delete all TaskNest tasks, categories, tags, workspaces and preferences from this device? This cannot be undone.')) return
+    if (!window.confirm('Permanently delete all TaskNest tasks, categories, tags, workspaces, notifications and preferences from this device? This cannot be undone.')) return
 
     void clearStorage().then(() => window.location.reload()).catch((error) => {
       console.error('Failed to clear TaskNest data:', error)
@@ -224,92 +250,100 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
   }
 
-  if (section === 'general') return (
+  if (section === 'appearance') return (
 
     <div className="space-y-6">
 
       <section>
 
-        <Heading title="Appearance" description="Choose how TaskNest looks. Your selection is saved on this device." />
+        <Heading title="Theme" description="Choose the look and feel of TaskNest. Your selection is saved on this device." />
 
-        <div className="max-w-xl">
+        <Card>
 
-          <label htmlFor="tasknest-theme" className="mb-2 block text-sm font-medium text-[var(--tn-text)]">Workspace theme</label>
+          <div className="max-w-2xl">
 
-          <select
+            <label htmlFor="tasknest-theme" className="mb-2 block text-sm font-medium text-[var(--tn-text)]">App theme</label>
 
-            id="tasknest-theme"
+            <select
 
-            className={fieldClass}
+              id="tasknest-theme"
 
-            value={settings.themeId}
+              className={fieldClass}
 
-            onChange={(event) => updateSetting('themeId', event.target.value)}
+              value={settings.themeId}
 
-          >
+              onChange={(event) => updateSetting('themeId', event.target.value)}
 
-            <option value={SYSTEM_THEME_ID}>System (follow device setting)</option>
+            >
 
-            <optgroup label="Light themes">
-              {themes
-                .filter((theme) => theme.mode === 'light')
-                .map((theme) => (
-                  <option key={theme.id} value={theme.id}>
-                    {theme.name}
-                  </option>
-                ))}
-            </optgroup>
+              <option value={SYSTEM_THEME_ID}>System (follow device setting)</option>
 
-            <optgroup label="Dark themes">
-              {themes
-                .filter((theme) => theme.mode === 'dark')
-                .map((theme) => (
-                  <option key={theme.id} value={theme.id}>
-                    {theme.name}
-                  </option>
-                ))}
-            </optgroup>
-          </select>
+              <optgroup label="Light themes">
+                {themes
+                  .filter((theme) => theme.mode === 'light')
+                  .map((theme) => (
+                    <option key={theme.id} value={theme.id}>
+                      {theme.name}
+                    </option>
+                  ))}
+              </optgroup>
 
-          <p className="mt-2 text-xs leading-5 text-[var(--tn-text-muted)]">
+              <optgroup label="Dark themes">
+                {themes
+                  .filter((theme) => theme.mode === 'dark')
+                  .map((theme) => (
+                    <option key={theme.id} value={theme.id}>
+                      {theme.name}
+                    </option>
+                  ))}
+              </optgroup>
+            </select>
 
-            {settings.themeId === SYSTEM_THEME_ID
+            <p className="mt-2 text-xs leading-5 text-[var(--tn-text-muted)]">
 
-              ? 'TaskNest automatically switches between light and dark based on your operating system.'
+              {settings.themeId === SYSTEM_THEME_ID
 
-              : `${themes.find((theme) => theme.id === settings.themeId)?.description ?? 'Selected workspace theme.'} Theme changes apply across the entire workspace.`}
+                ? 'TaskNest automatically switches between light and dark based on your operating system.'
 
-          </p>
+                : `${themes.find((theme) => theme.id === settings.themeId)?.description ?? 'Selected theme.'} Theme changes apply across TaskNest.`}
 
-        </div>
+            </p>
+
+          </div>
+
+        </Card>
 
       </section>
 
-      <section><Heading title="Regional preferences" description="Set the date and calendar conventions used by your workspace." /><Card>
-
-        <Row title="Date format" description="Choose how dates should be displayed.">
-
-          <select className={fieldClass} value={settings.dateFormat} onChange={(e) => updateSetting('dateFormat', e.target.value as TaskNestSettings['dateFormat'])}>
-
-            <option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option>
-
-          </select>
-
-        </Row>
-
-        <Row title="Start of week" description="Choose the first day shown in calendar-based views.">
-
-          <select className={fieldClass} value={settings.startOfWeek} onChange={(e) => updateSetting('startOfWeek', e.target.value as TaskNestSettings['startOfWeek'])}>
-
-            <option value="monday">Monday</option><option value="sunday">Sunday</option>
-
-          </select>
-
-        </Row>
-
-      </Card></section>
-
     </div>
+
+  )
+
+  if (section === 'general') return (
+
+    <section><Heading title="Regional preferences" description="Set the date and calendar conventions used throughout TaskNest." /><Card>
+
+      <Row title="Date format" description="Choose how dates should be displayed.">
+
+        <select className={fieldClass} value={settings.dateFormat} onChange={(e) => updateSetting('dateFormat', e.target.value as TaskNestSettings['dateFormat'])}>
+
+          <option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option>
+
+        </select>
+
+      </Row>
+
+      <Row title="Start of week" description="Choose the first day shown in calendar-based views.">
+
+        <select className={fieldClass} value={settings.startOfWeek} onChange={(e) => updateSetting('startOfWeek', e.target.value as TaskNestSettings['startOfWeek'])}>
+
+          <option value="monday">Monday</option><option value="sunday">Sunday</option>
+
+        </select>
+
+      </Row>
+
+    </Card></section>
 
   )
 
@@ -348,26 +382,63 @@ export default function SettingsSections({ section, settings, updateSetting, onN
   )
 
   if (section === 'notifications') return (
-
-    <section><Heading title="Reminder preferences" description="Control whether TaskNest reminders are enabled." /><Card>
-
-      <Row title="Enable reminders" description="Save your preference for receiving task reminders.">
-
-        <div className="flex justify-start sm:justify-end"><Toggle checked={settings.remindersEnabled} label="Enable reminders" onChange={(value) => updateSetting('remindersEnabled', value)} /></div>
-
-      </Row>
-
-    </Card>
-
-    <div className="mt-3 flex items-start gap-3 rounded-xl border border-indigo-500/20 bg-[var(--tn-primary)]/5 p-4"><Bell size={17} className="mt-0.5 shrink-0 text-indigo-400" /><p className="text-xs leading-5 text-[var(--tn-text-muted)]">This currently saves your reminder preference only. Browser notifications and automatic reminder scheduling have not yet been implemented.</p></div>
-
-    </section>
-
+    <div className="space-y-6">
+      <section>
+        <Heading title="Reminder preferences" description="Choose which task alerts TaskNest should create." />
+        <Card>
+          <Row title="Enable reminders" description="Master switch for individual reminders and automatic deadline alerts.">
+            <div className="flex justify-start sm:justify-end"><Toggle checked={settings.remindersEnabled} label="Enable reminders" onChange={(value) => updateSetting('remindersEnabled', value)} /></div>
+          </Row>
+          <Row title="Deadline-day alerts" description="Notify you on the due date at the time selected below.">
+            <div className="flex justify-start sm:justify-end"><Toggle checked={settings.automaticDueDateReminders} label="Deadline-day alerts" onChange={(value) => updateSetting('automaticDueDateReminders', value)} /></div>
+          </Row>
+          <Row title="Daily overdue alerts" description="Repeat an alert each day for unfinished tasks past their due date.">
+            <div className="flex justify-start sm:justify-end"><Toggle checked={settings.automaticOverdueReminders} label="Daily overdue alerts" onChange={(value) => updateSetting('automaticOverdueReminders', value)} /></div>
+          </Row>
+          <Row title="Alert time" description="Local device time used for automatic deadline and overdue alerts.">
+            <input type="time" aria-label="Deadline alert time" value={settings.deadlineReminderTime || '09:00'} onChange={(event) => updateSetting('deadlineReminderTime', event.target.value)} className={fieldClass} />
+          </Row>
+        </Card>
+      </section>
+      <section>
+        <Heading title="System notifications" description="Allow TaskNest to show system notifications on this device." />
+        <Card>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-[var(--tn-text)]">Permission status</p>
+              <p className="mt-1 text-xs text-[var(--tn-text-subtle)]">{notificationPermission === 'unsupported' ? 'This environment does not expose the browser notification API.' : notificationPermission === 'granted' ? 'System notifications are allowed.' : notificationPermission === 'denied' ? 'Notifications are blocked in system or browser settings.' : 'Permission has not been requested.'}</p>
+            </div>
+            <button type="button" disabled={notificationPermission === 'unsupported' || notificationPermission === 'denied' || notificationPermission === 'granted'} onClick={async () => {
+              try {
+                if (Capacitor.isNativePlatform()) {
+                  const permission = await LocalNotifications.requestPermissions()
+                  setNotificationPermission(permission.display)
+                  if (permission.display === 'granted') window.dispatchEvent(new Event('focus'))
+                  onNotice(permission.display === 'granted' ? 'System notifications enabled.' : 'System notification permission was not granted.')
+                } else if ('Notification' in window) {
+                  const permission = await Notification.requestPermission()
+                  setNotificationPermission(permission)
+                  onNotice(permission === 'granted' ? 'System notifications enabled.' : 'System notification permission was not granted.')
+                }
+              } catch (error) {
+                console.error('Could not request notification permission:', error)
+                onNotice('Could not enable system notifications on this device.')
+              }
+            }} className={primaryButton}>{notificationPermission === 'granted' ? 'Enabled' : notificationPermission === 'denied' ? 'Blocked in system settings' : 'Enable system notifications'}</button>
+          </div>
+        </Card>
+      </section>
+      <div className="flex items-start gap-3 rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] p-4">
+        <Bell size={17} className="mt-0.5 shrink-0 text-[var(--tn-primary)]" />
+        <p className="text-xs leading-5 text-[var(--tn-text-muted)]">
+          Set reminders for individual tasks. Notifications work even when TaskNest is closed on Android and iOS; on Windows and web, TaskNest must be running.
+        </p>      
+      </div>
+    </div>
   )
 
   if (section === 'data') {
 
-    const storageKeys = [...DATA_KEYS, SETTINGS_STORAGE_KEY]
 
     return (
 
@@ -377,7 +448,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-            <div className="flex items-start gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--tn-primary)]/10 text-indigo-400"><HardDrive size={19} /></div><div><p className="text-sm font-medium text-[var(--tn-text)]">Your TaskNest backup</p><p className="mt-1 max-w-xl text-xs leading-5 text-[var(--tn-text-subtle)]">Includes tasks, categories, tags, workspaces and preferences in one JSON file.</p></div></div>
+            <div className="flex items-start gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--tn-primary)]/10 text-indigo-400"><HardDrive size={19} /></div><div><p className="text-sm font-medium text-[var(--tn-text)]">Your TaskNest backup</p></div></div>
 
             <div className="flex flex-wrap gap-2"><button type="button" className={primaryButton} onClick={exportData}><Download size={16} />Export backup</button><button type="button" className={secondaryButton} onClick={() => fileInput.current?.click()}><Upload size={16} />Import backup</button></div>
 
@@ -389,13 +460,43 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
         </Card></section>
 
-        <section><Heading title="Local database" description="Understand where TaskNest keeps your information on this device." /><Card>
-          <div className="mb-4 flex items-start gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400"><ShieldCheck size={19} /></div><div><p className="text-sm font-medium text-[var(--tn-text)]">Stored on this device</p><p className="mt-1 text-xs leading-5 text-[var(--tn-text-subtle)]">Your data is stored locally and is not automatically synchronized to a cloud account.</p></div></div>
-          <div className="overflow-hidden rounded-lg border border-[var(--tn-border)]">{storageKeys.map((key, index) => {
-            const exists = storageStatus[key] ?? false
-            return <div key={key} className={`flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between ${index ? 'border-t border-[var(--tn-border)]' : ''}`}><span className="break-all text-xs text-[var(--tn-text-muted)]">{key}</span><span className={`inline-flex w-fit items-center gap-1.5 text-xs ${exists ? 'text-emerald-400' : 'text-[var(--tn-text-subtle)]'}`}><span className={`h-1.5 w-1.5 rounded-full ${exists ? 'bg-emerald-400' : 'bg-[var(--tn-border)]'}`} />{exists ? 'Present' : 'Not created yet'}</span></div>
-          })}</div>
-
+        <section><Heading title="Your local data" description="See what information TaskNest saves on this device." /><Card>
+          <div className="mb-5 flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400"><ShieldCheck size={19} /></div>
+            <div>
+              <p className="text-sm font-medium text-[var(--tn-text)]">Your information stays on this device</p>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--tn-text-subtle)]">TaskNest saves your information in this browser. It is not automatically synced to a cloud account, so remember to export a backup if you want to move your data to another device.</p>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-[var(--tn-border)]">
+            {[
+              { key: 'tasknest_tasks', label: 'Tasks', description: 'Your task names, details, deadlines and progress', Icon: ListTodo },
+              { key: 'tasknest_categories', label: 'Folders & categories', description: 'The folders and categories you use to organise tasks', Icon: Folder },
+              { key: 'tasknest_tags', label: 'Tags', description: 'Labels you use to group and find related tasks', Icon: Tags },
+              { key: 'tasknest_workspaces', label: 'Workspaces', description: 'Your separate spaces and their organisation', Icon: Layers },
+              { key: 'tasknest_notifications', label: 'Notifications', description: 'Your reminder and deadline alert history', Icon: Bell },
+              { key: SETTINGS_STORAGE_KEY, label: 'App preferences', description: 'Your theme, date format and other preferences', Icon: SlidersHorizontal },
+            ].map(({ key, label, description, Icon }, index) => {
+              const exists = storageStatus[key] ?? false
+              return (
+                <div key={key} className={`flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between ${index ? 'border-t border-[var(--tn-border)]' : ''}`}>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--tn-surface-muted)] text-[var(--tn-text-muted)]">
+                      <Icon size={17} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[var(--tn-text)]">{label}</p>
+                      <p className="mt-0.5 text-xs leading-5 text-[var(--tn-text-subtle)]">{description}</p>
+                    </div>
+                  </div>
+                  <span className={`inline-flex w-fit shrink-0 items-center gap-1.5 pl-12 text-xs sm:pl-0 ${exists ? 'text-emerald-400' : 'text-[var(--tn-text-subtle)]'}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${exists ? 'bg-emerald-400' : 'bg-[var(--tn-border)]'}`} />
+                    {exists ? 'Saved on this device' : 'Not saved yet'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         </Card></section>
         <section><Heading title="Danger zone" description="Actions here permanently affect data stored in this browser." /><div className="rounded-xl border border-red-500/25 bg-red-500/[0.04] p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div className="flex items-start gap-3"><AlertTriangle size={19} className="mt-0.5 shrink-0 text-red-400" /><div><h4 className="text-sm font-semibold text-red-300">Clear all local data</h4><p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--tn-text-muted)]">Permanently delete all TaskNest tasks, categories, tags, workspaces and preferences from this device. This cannot be undone.</p></div></div><button type="button" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-red-500/30 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/10" onClick={clearData}><Trash2 size={16} />Clear local data</button></div></div></section>
 
@@ -411,7 +512,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
       <div className="flex items-center gap-4 border-b border-[var(--tn-border)] pb-5"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--tn-primary)]/15 text-[var(--tn-primary)]"><SettingsIcon size={25} /></div><div><h3 className="text-base font-semibold text-[var(--tn-text)]">TaskNest</h3><p className="mt-1 text-xs text-[var(--tn-text-subtle)]">Personal task management</p></div></div>
       <div className="divide-y divide-[var(--tn-border)]">
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Application</span><span className="text-[var(--tn-text)]">TaskNest</span></div>
-        <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Version</span><span className="text-[var(--tn-text)]">0.1.0</span></div>
+        <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Version</span><span className="text-[var(--tn-text)]">1.0.0</span></div>
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Storage</span><span className="text-right text-[var(--tn-text)]">Local storage</span></div>
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Operating mode</span><span className="text-[var(--tn-text)]">Offline-first</span></div>
       </div>

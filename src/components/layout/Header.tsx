@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
-import { Bell, Plus, Search } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Bell, CheckSquare, ChevronRight, FolderPlus, Plus, Search } from 'lucide-react'
 
 interface Props {
   title: string
-  onSearch: () => void
   onNewTask: () => void
+  onNewWorkspace: () => void
   onNotifications?: () => void
   hasUnread?: boolean
 }
@@ -14,7 +14,7 @@ interface Props {
 // --------------------------------------------------
 
 const focusRing =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60'
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tn-primary)]/60'
 
 // All three controls share one height so the row reads as a single unit
 const controlBase = `relative inline-flex h-9 items-center gap-2 rounded-lg text-[13px] transition ${focusRing}`
@@ -66,57 +66,84 @@ function useToday() {
 
 export default function Header({
   title,
-  onSearch,
   onNewTask,
+  onNewWorkspace,
   onNotifications,
   hasUnread = false,
 }: Props) {
   const today = useToday()
+  const [createMenuOpen, setCreateMenuOpen] = useState(false)
+  const [searchValue, setSearchValue] = useState('')
+  const createMenuRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Make the "⌘K / Ctrl K" hint actually work.
-  // Remove this if your app already registers the shortcut elsewhere,
-  // otherwise it will fire twice.
+  useEffect(() => {
+    if (!createMenuOpen) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!createMenuRef.current?.contains(event.target as Node)) {
+        setCreateMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setCreateMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [createMenuOpen])
+
+  // The keyboard shortcut focuses the persistent inline search field.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        onSearch()
+        searchInputRef.current?.focus()
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onSearch])
+  }, [])
 
   return (
-    // Height matches the sidebar brand block so the two bottom borders line up
-    <header className="sticky top-0 z-10 flex h-[72px] items-center justify-between gap-4 border-b border-[var(--tn-border)] bg-[var(--tn-bg)]/90 px-8 backdrop-blur-xl">
-      <div className="min-w-0">
-        <time
-          dateTime={today.toLocaleDateString('en-CA')}
-          className="block text-xs text-[var(--tn-text-muted)]"
-        >
-          {dateFormatter.format(today)}
-        </time>
-        <h1 className="mt-0.5 truncate text-lg font-semibold text-[var(--tn-text)]">
-          {title}
-        </h1>
+    <header className="sticky top-0 z-30 flex h-[72px] w-full shrink-0 items-center justify-between gap-4 border-b border-[var(--tn-border)] bg-[var(--tn-bg)]/95 px-5 backdrop-blur-xl sm:px-7">
+      <div className="flex min-w-0 shrink-0 items-center gap-4">
+        <div className="min-w-0">
+          <time
+            dateTime={today.toLocaleDateString('en-CA')}
+            className="hidden text-xs text-[var(--tn-text-muted)] sm:block"
+          >
+            {dateFormatter.format(today)}
+          </time>
+          <h1 className="truncate text-base font-semibold text-[var(--tn-text)] sm:mt-0.5 sm:text-lg">
+            {title}
+          </h1>
+        </div>
+      </div>
+
+      {/* Persistent inline search expands into the available header space. */}
+      <div className="mx-3 flex h-10 min-w-0 flex-1 items-center rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-3 transition focus-within:border-[var(--tn-primary)]/70 focus-within:ring-2 focus-within:ring-[var(--tn-primary)]/15 sm:mx-6 sm:px-4">
+        <Search size={17} className="mr-3 shrink-0 text-[var(--tn-text-subtle)]" />
+        <input
+          ref={searchInputRef}
+          type="search"
+          value={searchValue}
+          onChange={(event) => setSearchValue(event.target.value)}
+          placeholder="Search tasks and workspaces..."
+          aria-label="Search tasks and workspaces"
+          aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}
+          className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm text-[var(--tn-text)] !outline-none !ring-0 !shadow-none focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none focus-visible:!outline-none focus-visible:!ring-0 placeholder:text-[var(--tn-text-subtle)]" style={{ outline: "none", boxShadow: "none", border: 0 }}
+        />
+        <kbd className="ml-3 hidden shrink-0 rounded border border-[var(--tn-border)] bg-[var(--tn-bg)] px-2 py-1 font-sans text-[11px] text-[var(--tn-text-muted)] lg:inline">
+          {shortcutLabel}
+        </kbd>
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        {/* Search: looks like a field, collapses to an icon on small screens */}
-        <button
-          type="button"
-          onClick={onSearch}
-          aria-label="Search"
-          aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}
-          className={`${controlBase} ${secondaryControl} w-9 justify-center md:w-60 md:justify-start md:px-3`}
-        >
-          <Search size={15} className="shrink-0" />
-          <span className="hidden md:inline">Search</span>
-          <kbd className="ml-auto hidden rounded border border-[var(--tn-border)] bg-white/[0.04] px-1.5 py-0.5 font-sans text-[11px] text-[var(--tn-text-muted)] md:inline">
-            {shortcutLabel}
-          </kbd>
-        </button>
 
         <button
           type="button"
@@ -129,21 +156,72 @@ export default function Header({
           {hasUnread && (
             <span
               aria-hidden="true"
-              className="absolute right-2 top-2 h-2 w-2 rounded-full bg-indigo-400 ring-2 ring-[#0b0f19]"
+              className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--tn-primary)] ring-2 ring-[var(--tn-bg)]"
             />
           )}
         </button>
 
-        <button
-          type="button"
-          onClick={onNewTask}
-          title="New task"
-          aria-label="New task"
-          className={`${controlBase} w-9 justify-center bg-[var(--tn-primary)] font-medium text-[var(--tn-text)] shadow-lg shadow-indigo-500/20 hover:bg-[var(--tn-primary-hover)] active:scale-[0.98] sm:w-auto sm:px-3.5`}
-        >
-          <Plus size={15} />
-          <span className="hidden sm:inline">New task</span>
-        </button>
+        <div ref={createMenuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setCreateMenuOpen((open) => !open)}
+            title="Create new"
+            aria-label="Create new"
+            aria-haspopup="menu"
+            aria-expanded={createMenuOpen}
+            className={`${controlBase} h-9 w-9 justify-center bg-[var(--tn-primary)] text-[var(--tn-text)] shadow-[0_8px_24px_var(--tn-primary-soft)] transition hover:bg-[var(--tn-primary-hover)] hover:shadow-[0_10px_28px_var(--tn-primary-soft)] active:scale-[0.98]`}
+          >
+            <Plus size={17} />
+          </button>
+
+          {createMenuOpen && (
+            <div
+              role="menu"
+              aria-label="Create new"
+              className="absolute right-0 top-[calc(100%+10px)] z-50 w-64 overflow-hidden rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)] p-1.5 shadow-2xl"
+            >
+              <div className="px-3 pb-2 pt-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--tn-text-subtle)]">
+                Create new
+              </div>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setCreateMenuOpen(false)
+                  onNewTask()
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[var(--tn-surface-hover)]"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--tn-primary-soft)] text-[var(--tn-primary)]">
+                  <CheckSquare size={17} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-[var(--tn-text)]">New task</span>
+                  <span className="mt-0.5 block text-xs text-[var(--tn-text-muted)]">Create a task in a workspace</span>
+                </span>
+                <ChevronRight size={15} className="text-[var(--tn-text-subtle)]" />
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setCreateMenuOpen(false)
+                  onNewWorkspace()
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[var(--tn-surface-hover)]"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--tn-primary-soft)] text-[var(--tn-primary)]">
+                  <FolderPlus size={17} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-[var(--tn-text)]">New workspace</span>
+                  <span className="mt-0.5 block text-xs text-[var(--tn-text-muted)]">Create a separate workspace</span>
+                </span>
+                <ChevronRight size={15} className="text-[var(--tn-text-subtle)]" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )

@@ -1,6 +1,6 @@
 [package]
 name = "tasknest"
-version = "0.1.0"
+version = "1.0.0"
 description = "TaskNest offline task manager"
 authors = ["TaskNest"]
 edition = "2021"

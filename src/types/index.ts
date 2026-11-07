@@ -46,6 +46,11 @@ export interface Task {
   priority: TaskPriority
   status: TaskStatus
   dueDate: string | null
+  /** Optional one-off reminder timestamp, stored as an ISO timestamp. */
+  reminderAt?: string | null
+  /** Optional calendar time block; stored as ISO timestamps. */
+  scheduledStart?: string | null
+  scheduledEnd?: string | null
   createdAt: string
   updatedAt: string
   completedAt?: string | null

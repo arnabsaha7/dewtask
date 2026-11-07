@@ -13,15 +13,20 @@ export function usePersistentValue<T>(key: StorageKey, fallback: T) {
     return fallback
   })
   const hydrated = useRef(false)
+  const [isHydrated, setIsHydrated] = useState(false)
   const latestValue = useRef(value)
-  latestValue.current = value
 
   useEffect(() => {
-    let cancelled = false
+    latestValue.current = value
+  }, [value])
+
+  useEffect(() => {
+    const cancelled = { current: false }
     readStorage<T>(key).then((stored) => {
-      if (cancelled) return
+      if (cancelled.current) return
       if (stored !== null) setValue(stored)
       hydrated.current = true
+      setIsHydrated(true)
       // Persist the current state after hydration; this also seeds first-run defaults.
       void writeStorage(key, stored !== null ? stored : latestValue.current).catch((error) => {
         console.error(`Could not initialize ${key}:`, error)
@@ -29,8 +34,9 @@ export function usePersistentValue<T>(key: StorageKey, fallback: T) {
     }).catch((error) => {
       console.error(`Could not load ${key} from local database:`, error)
       hydrated.current = true
+      setIsHydrated(true)
     })
-    return () => { cancelled = true }
+    return () => { cancelled.current = true }
   }, [key])
 
   useEffect(() => {
@@ -38,5 +44,5 @@ export function usePersistentValue<T>(key: StorageKey, fallback: T) {
     void writeStorage(key, value).catch((error) => console.error(`Could not save ${key}:`, error))
   }, [key, value])
 
-  return [value, setValue] as const
+  return [value, setValue, isHydrated] as const
 }

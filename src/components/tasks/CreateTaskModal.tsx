@@ -1,7 +1,7 @@
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Check, X, CalendarDays } from 'lucide-react'
+import { Check, X, CalendarDays, ChevronDown } from 'lucide-react'
 import CategoryTreeSelect from './CategoryTreeSelect'
 import type {
   Category,
@@ -14,6 +14,9 @@ interface Props {
   open: boolean
   workspaces: Workspace[]
   categories: Category[]
+  initialDate?: string | null
+  initialScheduledStart?: string | null
+  initialScheduledEnd?: string | null
   onClose: () => void
   onCreate: (input: {
     title: string
@@ -23,6 +26,9 @@ interface Props {
     priority: TaskPriority
     status: TaskStatus
     dueDate: string | null
+    reminderAt: string | null
+    scheduledStart: string | null
+    scheduledEnd: string | null
     autoProgressionEnabled: boolean
     autoProgressionStartAt: string | null
     autoProgressionEndAt: string | null
@@ -101,10 +107,19 @@ function getStatusStyle(status: TaskStatus, selected: boolean) {
   return styles[status]
 }
 
+function toLocalInputValue(value: string) {
+  const date = new Date(value)
+  const offset = date.getTimezoneOffset() * 60000
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+}
+
 export default function CreateTaskModal({
   open,
   workspaces,
   categories,
+  initialDate,
+  initialScheduledStart,
+  initialScheduledEnd,
   onClose,
   onCreate,
 }: Props) {
@@ -113,19 +128,42 @@ export default function CreateTaskModal({
   const [workspaceId, setWorkspaceId] = useState(
     workspaces[0]?.id ?? '',
   )
+  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
+  const workspaceMenuRef = useRef<HTMLDivElement>(null)
   const [categoryId, setCategoryId] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('Medium')
   const [status, setStatus] = useState<TaskStatus>('To Do')
   const [dueDate, setDueDate] = useState('')
+  const [reminderAt, setReminderAt] = useState('')
+  const [scheduledStart, setScheduledStart] = useState('')
+  const [scheduledEnd, setScheduledEnd] = useState('')
   const [autoProgressionEnabled, setAutoProgressionEnabled] = useState(false)
-  const [scheduleType, setScheduleType] = useState<'duration' | 'end'>('duration')
-  const [durationHours, setDurationHours] = useState('1')
-  const [autoEndAt, setAutoEndAt] = useState('')
+  const [clockNow] = useState(() => new Date())
 
   const categoryOptions = useMemo(
     () => flattenCategories(categories, workspaceId),
     [categories, workspaceId],
   )
+
+  useEffect(() => {
+    if (!workspaceMenuOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (workspaceMenuRef.current && !workspaceMenuRef.current.contains(event.target as Node)) {
+        setWorkspaceMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setWorkspaceMenuOpen(false)
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [workspaceMenuOpen])
 
   useEffect(() => {
     if (!categoryOptions.some((item) => item.category.id === categoryId)) {
@@ -138,15 +176,16 @@ export default function CreateTaskModal({
       setTitle('')
       setDescription('')
       setWorkspaceId(workspaces[0]?.id ?? '')
+      setWorkspaceMenuOpen(false)
       setPriority('Medium')
       setStatus('To Do')
-      setDueDate('')
+      setDueDate(initialDate ?? '')
+      setReminderAt('')
+      setScheduledStart(initialScheduledStart ? toLocalInputValue(initialScheduledStart) : '')
+      setScheduledEnd(initialScheduledEnd ? toLocalInputValue(initialScheduledEnd) : '')
       setAutoProgressionEnabled(false)
-      setScheduleType('duration')
-      setDurationHours('1')
-      setAutoEndAt('')
     }
-  }, [open, workspaces])
+  }, [open, workspaces, initialDate, initialScheduledStart, initialScheduledEnd])
 
   if (!open) return null
 
@@ -164,18 +203,21 @@ export default function CreateTaskModal({
       return
     }
 
-    const now = new Date()
-    const progressionEnd = autoProgressionEnabled
-      ? scheduleType === 'duration'
-        ? new Date(now.getTime() + Number(durationHours) * 60 * 60 * 1000)
-        : new Date(autoEndAt)
+    const progressionStart = autoProgressionEnabled && scheduledStart
+      ? new Date(scheduledStart)
+      : null
+    const progressionEnd = autoProgressionEnabled && scheduledEnd
+      ? new Date(scheduledEnd)
       : null
 
     if (
       autoProgressionEnabled &&
-      (!progressionEnd || !Number.isFinite(progressionEnd.getTime()) ||
-        progressionEnd.getTime() <= now.getTime() ||
-        (scheduleType === 'duration' && (!Number.isFinite(Number(durationHours)) || Number(durationHours) <= 0)))
+      (!progressionStart ||
+        !progressionEnd ||
+        !Number.isFinite(progressionStart.getTime()) ||
+        !Number.isFinite(progressionEnd.getTime()) ||
+        progressionEnd.getTime() <= progressionStart.getTime() ||
+        progressionEnd.getTime() <= Date.now())
     ) return
 
     onCreate({
@@ -186,8 +228,11 @@ export default function CreateTaskModal({
       priority,
       status,
       dueDate: dueDate || null,
+      reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
+      scheduledStart: autoProgressionEnabled && scheduledStart ? new Date(scheduledStart).toISOString() : null,
+      scheduledEnd: autoProgressionEnabled && scheduledEnd ? new Date(scheduledEnd).toISOString() : null,
       autoProgressionEnabled,
-      autoProgressionStartAt: autoProgressionEnabled ? now.toISOString() : null,
+      autoProgressionStartAt: progressionStart?.toISOString() ?? null,
       autoProgressionEndAt: progressionEnd?.toISOString() ?? null,
     })
 
@@ -205,7 +250,7 @@ export default function CreateTaskModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-task-title"
-        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-[var(--tn-border)] bg-[var(--tn-surface-elevated)] shadow-2xl"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--tn-border)] bg-[var(--tn-surface-elevated)] shadow-2xl"
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--tn-border)] bg-[var(--tn-surface-elevated)] px-6 py-5">
@@ -231,7 +276,7 @@ export default function CreateTaskModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 p-6">
+        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
           {/* Title */}
           <div>
             <label
@@ -265,7 +310,7 @@ export default function CreateTaskModal({
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={2000}
                 placeholder="Add more details about this task..."
-                rows={4}
+                rows={3}
                 className="w-full resize-none rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-4 py-3 pb-8 text-sm text-[var(--tn-text)] placeholder:text-[var(--tn-text-subtle)] focus:border-[var(--tn-primary)] focus:outline-none"
               />
 
@@ -285,19 +330,49 @@ export default function CreateTaskModal({
                 Workspace
               </label>
 
-              <select
-                id="task-workspace"
-                required
-                value={workspaceId}
-                onChange={(event) => setWorkspaceId(event.target.value)}
-                className="w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-3 py-3 text-xs text-[var(--tn-text)] outline-none focus:border-[var(--tn-primary)]"
-              >
-                {workspaces.map((workspace) => (
-                  <option key={workspace.id} value={workspace.id}>
-                    {workspace.name}
-                  </option>
-                ))}
-              </select>
+              <div ref={workspaceMenuRef} className="relative">
+                <button
+                  id="task-workspace"
+                  type="button"
+                  disabled={workspaces.length === 0}
+                  aria-haspopup="listbox"
+                  aria-expanded={workspaceMenuOpen}
+                  onClick={() => setWorkspaceMenuOpen((value) => !value)}
+                  className="flex w-full items-center justify-between rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-3 py-3 text-left text-xs text-[var(--tn-text)] outline-none transition hover:border-[var(--tn-nav-active-border)] focus-visible:border-[var(--tn-primary)] focus-visible:ring-2 focus-visible:ring-[var(--tn-primary)]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="min-w-0 truncate">
+                    {workspaces.find((workspace) => workspace.id === workspaceId)?.name ?? 'Select a workspace'}
+                  </span>
+                  <ChevronDown size={15} className={`ml-2 shrink-0 text-[var(--tn-text-muted)] transition-transform ${workspaceMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {workspaceMenuOpen && workspaces.length > 0 && (
+                  <div
+                    role="listbox"
+                    aria-labelledby="task-workspace"
+                    className="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-elevated)] py-1 text-[var(--tn-text)] shadow-2xl"
+                  >
+                    {workspaces.map((workspace) => (
+                      <button
+                        key={workspace.id}
+                        type="button"
+                        role="option"
+                        aria-selected={workspace.id === workspaceId}
+                        onClick={() => {
+                          setWorkspaceId(workspace.id)
+                          setWorkspaceMenuOpen(false)
+                        }}
+                        className={`flex h-8 w-full items-center px-3 text-left text-xs transition-colors ${
+                          workspace.id === workspaceId
+                            ? 'bg-[var(--tn-nav-active-bg)] font-medium text-[var(--tn-nav-active-text)]'
+                            : 'text-[var(--tn-text-muted)] hover:bg-[var(--tn-nav-hover-bg)] hover:text-[var(--tn-nav-hover-text)]'
+                        }`}
+                      >
+                        <span className="truncate">{workspace.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -401,36 +476,85 @@ export default function CreateTaskModal({
                 type="date"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.target.value)}
+                style={{ colorScheme: "dark", accentColor: "var(--tn-primary)" }}
                 className="w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] py-3 pl-10 pr-3 text-xs text-[var(--tn-text)] outline-none transition focus:border-[var(--tn-primary)] "
               />
             </div>
           </div>
 
+          {/* Optional one-off reminder */}
+          <div>
+            <label
+              htmlFor="task-reminder-at"
+              className="mb-2 block text-xs font-medium text-[var(--tn-text-muted)]"
+            >
+              Set reminder
+              <span className="ml-1 font-normal text-[var(--tn-text-subtle)]">
+                (optional)
+              </span>
+            </label>
+
+            <input
+              id="task-reminder-at"
+              type="datetime-local"
+              value={reminderAt}
+              min={(() => {
+                const localNow = new Date(clockNow.getTime() - clockNow.getTimezoneOffset() * 60000)
+                return localNow.toISOString().slice(0, 16)
+              })()}
+              onChange={(event) => setReminderAt(event.target.value)}
+              style={{ colorScheme: "dark", accentColor: "var(--tn-primary)" }}
+              className="h-10 w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-3 text-xs text-[var(--tn-text)] outline-none transition focus:border-[var(--tn-primary)]"
+            />
+            <p className="mt-1.5 text-xs text-[var(--tn-text-subtle)]">
+              Choose when you want to be reminded about this task.
+            </p>
+          </div>
+
           {/* Automatic progression */}
           <section className="rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] p-4">
             <label className="flex cursor-pointer items-start gap-3">
-              <input type="checkbox" checked={autoProgressionEnabled} onChange={(event) => setAutoProgressionEnabled(event.target.checked)} className="mt-1 h-4 w-4 accent-[var(--tn-primary)]" />
+              <input
+                type="checkbox"
+                checked={autoProgressionEnabled}
+                onChange={(event) => setAutoProgressionEnabled(event.target.checked)}
+                className="mt-1 h-4 w-4 accent-[var(--tn-primary)]"
+              />
               <span>
                 <span className="block text-sm font-medium text-[var(--tn-text)]">Enable auto-progression</span>
-                <span className="mt-1 block text-xs text-[var(--tn-text-subtle)]">Automatically complete this task when its scheduled time expires.</span>
+                <span className="mt-1 block text-xs text-[var(--tn-text-subtle)]">
+                  Automatically complete this task when its scheduled time expires.
+                </span>
               </span>
             </label>
+
             {autoProgressionEnabled && (
-              <div className="mt-4 space-y-3 border-t border-[var(--tn-border)] pt-4">
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setScheduleType('duration')} className={`rounded-lg border px-3 py-2 text-xs ${scheduleType === 'duration' ? 'border-[var(--tn-primary)] text-[var(--tn-primary)]' : 'border-[var(--tn-border)] text-[var(--tn-text-muted)]'}`}>Duration</button>
-                  <button type="button" onClick={() => setScheduleType('end')} className={`rounded-lg border px-3 py-2 text-xs ${scheduleType === 'end' ? 'border-[var(--tn-primary)] text-[var(--tn-primary)]' : 'border-[var(--tn-border)] text-[var(--tn-text-muted)]'}`}>End date &amp; time</button>
-                </div>
-                {scheduleType === 'duration' ? (
-                  <label className="block text-xs text-[var(--tn-text-muted)]">Duration (hours)
-                    <input type="number" min="0.01" step="any" required={autoProgressionEnabled} value={durationHours} onChange={(event) => setDurationHours(event.target.value)} className="mt-2 w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-3 py-2.5 text-sm text-[var(--tn-text)] outline-none focus:border-[var(--tn-primary)]" />
-                  </label>
-                ) : (
-                  <label className="block text-xs text-[var(--tn-text-muted)]">End date &amp; time
-                    <input type="datetime-local" required={autoProgressionEnabled} min={new Date().toISOString().slice(0, 16)} value={autoEndAt} onChange={(event) => setAutoEndAt(event.target.value)} className="mt-2 w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-3 py-2.5 text-sm text-[var(--tn-text)] outline-none focus:border-[var(--tn-primary)]" />
-                  </label>
-                )}
-                <p className="text-xs text-[var(--tn-text-subtle)]">The timer starts when the task is created.</p>
+              <div className="mt-4 grid gap-3 border-t border-[var(--tn-border)] pt-4 sm:grid-cols-2">
+                <label className="block text-xs text-[var(--tn-text-muted)]">
+                  Starts
+                  <input
+                    type="datetime-local"
+                    required={autoProgressionEnabled}
+                    value={scheduledStart}
+                    onChange={(event) => setScheduledStart(event.target.value)}
+                    style={{ colorScheme: "dark", accentColor: "var(--tn-primary)" }}
+                    className="mt-2 h-10 w-full min-w-0 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-3 text-xs text-[var(--tn-text)] outline-none focus:border-[var(--tn-primary)]"
+                  />
+                </label>
+                <label className="block text-xs text-[var(--tn-text-muted)]">
+                  Ends
+                  <input
+                    type="datetime-local"
+                    required={autoProgressionEnabled}
+                    min={scheduledStart || undefined}
+                    value={scheduledEnd}
+                    onChange={(event) => setScheduledEnd(event.target.value)}
+                    className="mt-2 h-10 w-full min-w-0 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-3 text-xs text-[var(--tn-text)] outline-none focus:border-[var(--tn-primary)]"
+                  />
+                </label>
+                <p className="text-xs text-[var(--tn-text-subtle)] sm:col-span-2">
+                  The task will automatically complete when the end time is reached.
+                </p>
               </div>
             )}
           </section>
@@ -452,9 +576,12 @@ export default function CreateTaskModal({
                 !workspaceId ||
                 !categoryId ||
                 categoryOptions.length === 0 ||
-                (autoProgressionEnabled && (scheduleType === 'duration'
-                  ? !Number.isFinite(Number(durationHours)) || Number(durationHours) <= 0
-                  : !autoEndAt || new Date(autoEndAt).getTime() <= Date.now()))
+                (autoProgressionEnabled && (
+                  !scheduledStart ||
+                  !scheduledEnd ||
+                  new Date(scheduledEnd).getTime() <= new Date(scheduledStart).getTime() ||
+                  new Date(scheduledEnd).getTime() <= clockNow.getTime()
+                ))
               }
               className="flex items-center gap-2 rounded-lg bg-[var(--tn-primary)] text-white px-5 py-2.5 text-xs font-medium transition hover:bg-[var(--tn-primary-hover)] disabled:cursor-not-allowed disabled:opacity-40"
             >

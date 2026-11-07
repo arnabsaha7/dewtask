@@ -6,8 +6,8 @@ import {
   Circle,
   Clock3,
   CalendarDays,
-  Trash2,
   ListTodo,
+  Trash2,
   Tag as TagIcon,
 } from 'lucide-react'
 
@@ -46,7 +46,7 @@ const priorityStyles: Record<string, string> = {
 
 const statusStyles: Record<string, string> = {
   'To Do': 'text-[var(--tn-text-muted)]',
-  'In Progress': 'text-blue-400',
+  'In Progress': 'text-[var(--tn-primary)]',
   Completed: 'text-emerald-400',
 }
 
@@ -172,12 +172,6 @@ export default function TaskList({
   ])
 
   // Page title
-  const title = selectedCategoryId
-    ? categories.find(
-        (category) => category.id === selectedCategoryId
-      )?.name ?? 'Category Tasks'
-    : activeNav
-
   const completedCount = filteredTasks.filter(
     (task) => task.status === 'Completed'
   ).length
@@ -189,17 +183,8 @@ export default function TaskList({
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
 
         <div>
-          <div className="mb-2 flex items-center gap-2 text-sm text-[var(--tn-text-subtle)]">
-            <ListTodo size={15} />
-            <span>Tasks</span>
-          </div>
-
-          <h1 className="text-2xl font-semibold text-[var(--tn-text)]">
-            {title}
-          </h1>
-
-          <p className="mt-1 text-sm text-[var(--tn-text-muted)]">
-            {filteredTasks.length} tasks · {completedCount} completed
+          <p className="text-sm text-[var(--tn-text-muted)]">
+            {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} · {completedCount} completed
           </p>
         </div>
 
@@ -218,7 +203,7 @@ export default function TaskList({
             <button
               type="button"
               onClick={onManageTags}
-              className="flex items-center gap-2 rounded-lg border border-[var(--tn-border)] px-3 py-2 text-sm text-[var(--tn-text-muted)] transition hover:border-indigo-500/40 hover:bg-[var(--tn-primary)]/10 hover:text-indigo-300"
+              className="flex items-center gap-2 rounded-lg border border-[var(--tn-border)] px-3 py-2 text-sm text-[var(--tn-text-muted)] transition hover:border-[var(--tn-primary)]/50 hover:bg-[var(--tn-primary-soft)] hover:text-[var(--tn-text)]"
             >
               <TagIcon size={15} />
               Manage Tags
@@ -243,8 +228,9 @@ export default function TaskList({
       <div className="overflow-hidden rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)]">
 
         {/* Column headings */}
-        <div className="grid grid-cols-[minmax(260px,1.7fr)_90px_125px_120px_36px] items-center gap-4 border-b border-[var(--tn-border)] px-6 py-3 text-xs font-medium uppercase tracking-wide text-[var(--tn-text-subtle)]">
+        <div className="grid grid-cols-[minmax(260px,1.7fr)_minmax(130px,0.8fr)_90px_125px_120px_36px] items-center gap-4 border-b border-[var(--tn-border)] px-6 py-3 text-xs font-medium uppercase tracking-wide text-[var(--tn-text-subtle)]">
           <span>Task</span>
+          <span>Progress</span>
           <span>Priority</span>
           <span>Status</span>
           <span>Due date</span>
@@ -262,7 +248,7 @@ export default function TaskList({
             return (
               <div
                 key={task.id}
-                className="group grid grid-cols-[minmax(260px,1.7fr)_90px_125px_120px_36px] items-center gap-4 border-b border-[var(--tn-border)] px-6 py-5 transition-colors hover:bg-[var(--tn-surface-hover)]/70 last:border-b-0"
+                className="group grid grid-cols-[minmax(260px,1.7fr)_minmax(130px,0.8fr)_90px_125px_120px_36px] items-center gap-4 border-b border-[var(--tn-border)] px-6 py-5 transition-colors hover:bg-[var(--tn-surface-hover)]/70 last:border-b-0"
               >
 
                 {/* Task title */}
@@ -310,8 +296,12 @@ export default function TaskList({
                     <p className="mt-1.5 truncate text-xs text-[var(--tn-text-muted)]">
                       {category?.name ?? 'Uncategorized'}
                     </p>
-                    <AutoProgressIndicator task={task} compact />
                   </div>
+                </div>
+
+                {/* Progress */}
+                <div className="min-w-0 pr-1">
+                  <AutoProgressIndicator task={task} compact fullWidth />
                 </div>
 
                 {/* Priority */}

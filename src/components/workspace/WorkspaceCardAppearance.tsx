@@ -157,7 +157,7 @@ export default function WorkspaceCardAppearance({
             type="button"
             onClick={handleImageUrl}
             disabled={!imageUrl.trim()}
-            className="rounded-xl bg-[var(--tn-primary)] px-3 py-2 text-xs font-medium text-white transition hover:bg-[var(--tn-primary-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl bg-[var(--tn-primary)] px-3 py-2 text-xs font-medium text-[var(--tn-text)] shadow-[0_5px_14px_var(--tn-primary-soft)] transition hover:bg-[var(--tn-primary-hover)] hover:shadow-[0_7px_18px_var(--tn-primary-soft)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             Apply
           </button>

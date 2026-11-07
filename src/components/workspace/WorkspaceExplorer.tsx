@@ -12,7 +12,6 @@ import {
   List,
   LayoutGrid,
   ListTodo,
-  Plus,
   Search,
   SlidersHorizontal,
   Sparkles,
@@ -27,7 +26,7 @@ interface Props {
   tasks: Task[]
   categories: Category[]
   onViewModeChange: (mode: 'folders' | 'list' | 'board') => void
-  onCreateTask: () => void
+  onBackToWorkspaces: () => void
   onManageCategories: () => void
   onToggleTask: (id: string) => void
   onDeleteTask: (id: string) => void
@@ -82,7 +81,7 @@ function TaskRow({
 
   return (
     <div
-      className="group flex min-w-0 items-center gap-3 rounded-xl border border-transparent px-3 py-3 transition hover:border-[var(--tn-border)] hover:bg-[var(--tn-surface-hover)]"
+      className="group grid min-w-0 grid-cols-[20px_minmax(0,1fr)_76px_24px] items-center gap-x-3 gap-y-2 rounded-xl border border-transparent px-3 py-3 transition hover:border-[var(--tn-border)] hover:bg-[var(--tn-surface-hover)] sm:grid-cols-[20px_minmax(0,1fr)_100px_72px_24px] md:grid-cols-[20px_minmax(0,1fr)_112px_76px_100px_24px] lg:grid-cols-[20px_minmax(0,1fr)_112px_104px_76px_100px_24px]"
       style={{ marginLeft: `${depth * 22}px` }}
     >
       <button
@@ -112,19 +111,22 @@ function TaskRow({
         {task.description && (
           <p className="mt-1 truncate text-xs text-[var(--tn-text-subtle)]">{task.description}</p>
         )}
-        <AutoProgressIndicator task={task} compact />
+      </div>
+
+      <div className="flex min-w-0 items-center justify-start">
+        <AutoProgressIndicator task={task} compact compactWidth="wide" />
       </div>
 
       <span className={`hidden rounded-md px-2 py-1 text-[10px] font-semibold sm:inline-flex ${priorityClass[task.priority] ?? ''}`}>
         {task.priority}
       </span>
 
-      <span className={`hidden items-center gap-1 text-xs md:flex ${completed ? 'text-emerald-400' : 'text-[var(--tn-text-subtle)]'}`}>
+      <span className={`hidden min-w-0 items-center gap-1 text-xs md:flex ${completed ? 'text-emerald-400' : 'text-[var(--tn-text-subtle)]'}`}>
         {task.status === 'In Progress' ? <Clock3 size={12} /> : <Circle size={11} />}
         {task.status}
       </span>
 
-      <span className="hidden min-w-[78px] items-center justify-end gap-1 text-xs text-[var(--tn-text-subtle)] lg:flex">
+      <span className="hidden min-w-0 items-center justify-end gap-1 text-xs text-[var(--tn-text-subtle)] lg:flex">
         <CalendarDays size={12} />
         {getTaskDate(task.dueDate)}
       </span>
@@ -178,7 +180,7 @@ function FolderBranch({
   return (
     <div className="relative">
       <div
-        className="group flex min-w-0 items-center gap-3 rounded-xl border border-transparent px-3 py-3 transition hover:border-[var(--tn-border)] hover:bg-[var(--tn-surface-hover)]"
+        className="group grid min-w-0 grid-cols-[28px_36px_minmax(0,1fr)_112px_auto] items-center gap-3 rounded-xl border border-transparent px-3 py-3 transition hover:border-[var(--tn-border)] hover:bg-[var(--tn-surface-hover)]"
         style={{ marginLeft: `${depth * 22}px` }}
       >
         <button
@@ -208,7 +210,7 @@ function FolderBranch({
           </span>
         </button>
 
-        <div className="hidden w-28 shrink-0 sm:block">
+        <div className="hidden w-full min-w-0 sm:block">
           <div className="mb-1 flex items-center justify-between text-[10px] text-[var(--tn-text-subtle)]">
             <span>Progress</span><span>{progress}%</span>
           </div>
@@ -261,7 +263,7 @@ export default function WorkspaceExplorer({
   tasks,
   categories,
   onViewModeChange,
-  onCreateTask,
+  onBackToWorkspaces,
   onManageCategories,
   onToggleTask,
   onDeleteTask,
@@ -323,27 +325,26 @@ export default function WorkspaceExplorer({
     <div className="min-w-0 flex-1 px-6 py-7 lg:px-9">
       <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-[var(--tn-text-subtle)]">
-            <span>Workspaces</span><ChevronRight size={13} /><span className="text-[var(--tn-text-muted)]">{workspace.name}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--tn-primary-soft)] text-[var(--tn-primary)]">
-              <Folder size={21} />
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-2xl font-semibold tracking-tight text-[var(--tn-text)]">{workspace.name}</h1>
-              <p className="mt-0.5 text-sm text-[var(--tn-text-muted)]">
-                {workspace.description || 'Your projects, folders and tasks in one place.'}
-              </p>
-            </div>
-          </div>
+          <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-2 text-xs font-medium">
+            <button
+              type="button"
+              onClick={onBackToWorkspaces}
+              className="text-[var(--tn-text-subtle)] transition hover:text-[var(--tn-primary)]"
+            >
+              Workspaces
+            </button>
+            <ChevronRight size={13} className="text-[var(--tn-text-subtle)]" />
+            <span aria-current="page" className="truncate text-[var(--tn-text-muted)]">
+              {workspace.name}
+            </span>
+          </nav>
+          <p className="text-sm text-[var(--tn-text-muted)]">
+            {workspace.description || 'Your projects, folders and tasks in one place.'}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={onManageCategories} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--tn-border)] px-3.5 text-sm font-medium text-[var(--tn-text-muted)] transition hover:bg-[var(--tn-surface-hover)] hover:text-[var(--tn-text)]">
             <FolderPlus size={15} /> Manage folders
-          </button>
-          <button type="button" onClick={onCreateTask} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--tn-primary)] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--tn-primary-hover)]">
-            <Plus size={16} /> New task
           </button>
         </div>
       </div>
@@ -430,7 +431,7 @@ export default function WorkspaceExplorer({
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--tn-primary-soft)] text-[var(--tn-primary)]"><Folder size={25} /></div>
               <h3 className="mt-4 text-sm font-semibold text-[var(--tn-text)]">This workspace is ready for its first folder</h3>
               <p className="mt-1 max-w-sm text-xs leading-relaxed text-[var(--tn-text-muted)]">Create folders to organise projects, topics and tasks into a structure that works for you.</p>
-              <button type="button" onClick={onManageCategories} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--tn-primary)] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[var(--tn-primary-hover)]"><FolderPlus size={14} /> Create first folder</button>
+              <button type="button" onClick={onManageCategories} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--tn-primary)] px-4 py-2.5 text-xs font-semibold text-[var(--tn-text)] shadow-[0_6px_18px_var(--tn-primary-soft)] transition hover:bg-[var(--tn-primary-hover)] hover:shadow-[0_8px_22px_var(--tn-primary-soft)]"><FolderPlus size={14} /> Create first folder</button>
             </div>
           )}
 

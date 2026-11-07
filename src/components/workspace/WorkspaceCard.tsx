@@ -1,4 +1,5 @@
 
+import { useEffect, useRef, useState } from 'react'
 import {
   MoreHorizontal,
   Pencil,
@@ -33,8 +34,38 @@ export default function WorkspaceCard({
   onEdit,
   onDelete,
 }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        setMenuOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [menuOpen])
+
   return (
-    <article className="group relative isolate flex aspect-[4/5] min-w-0 flex-col justify-end overflow-hidden rounded-2xl bg-[var(--tn-surface-muted)] shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <article className="group relative isolate flex h-[184px] min-w-0 flex-col justify-end overflow-hidden rounded-xl bg-[var(--tn-surface-muted)] shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:h-[196px]">
       {/* Background image or fallback */}
       {workspace.coverImage ? (
         <img
@@ -61,34 +92,33 @@ export default function WorkspaceCard({
       )}
 
       {/* Three-dot menu */}
-      <div className="absolute right-3 top-3 z-20">
+      <div ref={menuRef} className="absolute right-3 top-3 z-20">
         <button
           type="button"
           aria-label={`Options for ${workspace.name}`}
           aria-haspopup="menu"
+          aria-expanded={menuOpen}
           onClick={(event) => {
             event.stopPropagation()
-
-            const menu = event.currentTarget.nextElementSibling
-            if (menu) {
-              menu.classList.toggle('hidden')
-            }
+            setMenuOpen((open) => !open)
           }}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition hover:bg-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white shadow-sm backdrop-blur-md transition hover:bg-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <MoreHorizontal size={20} />
         </button>
 
-        <div
-          role="menu"
-          className="hidden absolute right-0 top-11 w-36 overflow-hidden rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)] py-1 shadow-xl"
-          onClick={(event) => event.stopPropagation()}
-        >
+        {menuOpen && (
+          <div
+            role="menu"
+            className="absolute right-0 top-10 w-36 overflow-hidden rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)] py-1 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
           <button
             type="button"
             role="menuitem"
             onClick={(event) => {
               event.stopPropagation()
+              setMenuOpen(false)
               onEdit()
             }}
             className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-[var(--tn-text)] transition hover:bg-[var(--tn-surface-hover)]"
@@ -102,6 +132,7 @@ export default function WorkspaceCard({
             role="menuitem"
             onClick={(event) => {
               event.stopPropagation()
+              setMenuOpen(false)
               onDelete()
             }}
             className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-red-500 transition hover:bg-red-500/10"
@@ -109,7 +140,8 @@ export default function WorkspaceCard({
             <Trash2 size={15} />
             Delete
           </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Clickable card content */}
@@ -121,18 +153,18 @@ export default function WorkspaceCard({
       />
 
       {/* Text content */}
-      <div className="pointer-events-none relative z-10 p-4 sm:p-5">
+      <div className="pointer-events-none relative z-10 p-3.5 sm:p-4">
         <h2 className="line-clamp-2 text-lg font-semibold leading-snug tracking-tight text-white sm:text-xl">
           {workspace.name}
         </h2>
 
         {workspace.description && (
-          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-white/80 sm:text-sm">
+          <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-white/80 sm:text-xs">
             {workspace.description}
           </p>
         )}
 
-        <div className="mt-4 flex items-center gap-2 text-xs text-white/85">
+        <div className="mt-2.5 flex items-center gap-2 text-[11px] text-white/85">
           <span className="font-medium text-white">
             {taskCount} {taskCount === 1 ? 'task' : 'tasks'}
           </span>

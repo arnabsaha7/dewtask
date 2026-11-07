@@ -12,7 +12,7 @@ import {
 import type { TaskNestSettings } from '../../hooks/useSettings'
 import SettingsSections from './SettingsSections'
 
-type Section = 'general' | 'tasks' | 'notifications' | 'data' | 'about'
+type Section = 'general' | 'appearance' | 'tasks' | 'notifications' | 'data' | 'about'
 
 const sections: {
   id: Section
@@ -20,7 +20,8 @@ const sections: {
   description: string
   icon: typeof SettingsIcon
 }[] = [
-  { id: 'general', label: 'General', description: 'Appearance and regional preferences', icon: Palette },
+  { id: 'general', label: 'General', description: 'Regional and workspace preferences', icon: SettingsIcon },
+  { id: 'appearance', label: 'Appearance', description: 'Choose your theme and visual style', icon: Palette },
   { id: 'tasks', label: 'Task preferences', description: 'Choose how tasks are displayed', icon: ListTodo },
   { id: 'notifications', label: 'Notifications', description: 'Reminder preferences', icon: Bell },
   { id: 'data', label: 'Data & storage', description: 'Backup, restore and manage your data', icon: Database },
@@ -45,9 +46,7 @@ export default function Settings({
   resetSettings,
 }: SettingsProps) {
   const [activeSection, setActiveSection] = useState<Section>('general')
-  const [notice, setNotice] = useState('')
-
-  const activeItem = sections.find((section) => section.id === activeSection)
+  const [, setNotice] = useState('')
 
   const update = <K extends keyof TaskNestSettings>(
     key: K,
@@ -67,34 +66,8 @@ export default function Settings({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-5 py-7 sm:px-7 lg:px-10 lg:py-9">
-      <header className="mb-8 border-b border-[var(--tn-border)] pb-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--tn-primary)]/25 bg-[var(--tn-primary-soft)] text-[var(--tn-primary)]">
-            <SettingsIcon size={21} />
-          </div>
-
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-[var(--tn-text)]">
-              Settings
-            </h1>
-            <p className="mt-1 text-sm text-[var(--tn-text-muted)]">
-              Manage your TaskNest preferences and workspace data.
-            </p>
-          </div>
-        </div>
-      </header>
-
-      {notice && (
-        <div
-          role="status"
-          className="mb-6 rounded-lg border border-emerald-600/30 bg-emerald-500/10 px-4 py-3 text-sm text-[var(--tn-text)]"
-        >
-          {notice}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[220px_minmax(0,1fr)] xl:gap-10">
+    <div className="w-full px-5 py-6 sm:px-7 lg:px-9 xl:px-10 2xl:px-12 lg:py-8">
+      <div className="grid w-full grid-cols-1 gap-5 lg:grid-cols-[250px_minmax(0,1fr)] xl:gap-8 2xl:gap-10">
         <aside className="h-fit lg:sticky lg:top-6">
           <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--tn-text-muted)]">
             Preferences
@@ -138,21 +111,9 @@ export default function Settings({
             })}
           </nav>
 
-          <p className="mt-3 hidden px-3 text-xs leading-5 text-[var(--tn-text-muted)] lg:block">
-            Preferences are saved automatically on this device.
-          </p>
         </aside>
 
         <main className="min-w-0">
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold tracking-tight text-[var(--tn-text)]">
-              {activeItem?.label}
-            </h2>
-            <p className="mt-1 text-sm text-[var(--tn-text-muted)]">
-              {activeItem?.description}
-            </p>
-          </div>
-
           <SettingsSections
             section={activeSection}
             settings={settings}

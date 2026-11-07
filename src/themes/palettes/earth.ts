@@ -21,7 +21,7 @@ const theme: ThemePalette = {
     // Typography
     text: '#685752',
     textMuted: '#806D66',
-    textSubtle: '#95847D',
+    textSubtle: '#75635D',
 
     // Primary interaction: Sage Green
     primary: '#648B5D',

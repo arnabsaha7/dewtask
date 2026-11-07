@@ -17,7 +17,7 @@ const theme: ThemePalette = {
 
     text: '#304C64',
     textMuted: '#496777',
-    textSubtle: '#718D98',
+    textSubtle: '#5C7480',
 
     primary: '#26788E',
     primaryHover: '#1F6578',
