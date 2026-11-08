@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import type { TaskNestSettings } from '../../hooks/useSettings'
 import SettingsSections from './SettingsSections'
+import type { AppUpdaterControls } from '../../hooks/useAppUpdater'
 
 type Section = 'general' | 'appearance' | 'tasks' | 'notifications' | 'data' | 'about'
 
@@ -38,12 +39,14 @@ interface SettingsProps {
     value: TaskNestSettings[K],
   ) => void
   resetSettings: () => void
+  updater: AppUpdaterControls
 }
 
 export default function Settings({
   settings,
   updateSetting,
   resetSettings,
+  updater,
 }: SettingsProps) {
   const [activeSection, setActiveSection] = useState<Section>('general')
   const [, setNotice] = useState('')
@@ -119,6 +122,7 @@ export default function Settings({
             settings={settings}
             updateSetting={update}
             onNotice={showNotice}
+            updater={updater}
           />
 
           {activeSection !== 'data' && (

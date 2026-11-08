@@ -6,7 +6,7 @@ import {
 
   Download, Upload, Trash2, AlertTriangle,
   HardDrive, ShieldCheck, Bell, Settings as SettingsIcon,
-  Folder, Tags, Layers, SlidersHorizontal, ListTodo,
+  Folder, Tags, Layers, SlidersHorizontal, ListTodo, RefreshCw,
 
 } from 'lucide-react'
 
@@ -23,6 +23,8 @@ import {
 import { themes, SYSTEM_THEME_ID } from '../../themes/registry'
 import { Capacitor } from '@capacitor/core'
 import { isTauri } from '@tauri-apps/api/core'
+import { getVersion } from '@tauri-apps/api/app'
+import type { AppUpdaterControls } from '../../hooks/useAppUpdater'
 import {
   isPermissionGranted as isTauriNotificationPermissionGranted,
   requestPermission as requestTauriNotificationPermission,
@@ -50,6 +52,8 @@ interface Props {
   updateSetting: UpdateSetting
 
   onNotice: (message: string) => void
+
+  updater: AppUpdaterControls
 
 }
 
@@ -117,7 +121,15 @@ function Toggle({ checked, label, onChange }: { checked: boolean; label: string;
 
 }
 
-export default function SettingsSections({ section, settings, updateSetting, onNotice }: Props) {
+export default function SettingsSections({ section, settings, updateSetting, onNotice, updater }: Props) {
+
+  const [appVersion, setAppVersion] = useState('')
+  useEffect(() => {
+    if (!isTauri()) return
+    void getVersion().then(setAppVersion).catch((error) => {
+      console.error('Could not read TaskNest version:', error)
+    })
+  }, [])
 
   const fileInput = useRef<HTMLInputElement>(null)
 
@@ -532,12 +544,64 @@ export default function SettingsSections({ section, settings, updateSetting, onN
       <div className="flex items-center gap-4 border-b border-[var(--tn-border)] pb-5"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--tn-primary)]/15 text-[var(--tn-primary)]"><SettingsIcon size={25} /></div><div><h3 className="text-base font-semibold text-[var(--tn-text)]">TaskNest</h3><p className="mt-1 text-xs text-[var(--tn-text-subtle)]">Personal task management</p></div></div>
       <div className="divide-y divide-[var(--tn-border)]">
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Application</span><span className="text-[var(--tn-text)]">TaskNest</span></div>
-        <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Version</span><span className="text-[var(--tn-text)]">1.0.0</span></div>
+        <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Version</span><span className="text-[var(--tn-text)]">{appVersion}</span></div>
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Storage</span><span className="text-right text-[var(--tn-text)]">Local storage</span></div>
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Operating mode</span><span className="text-[var(--tn-text)]">Offline-first</span></div>
       </div>
 
-      <div className="mt-2 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)]/70 p-4">
+      {isTauri() && (
+        <div className="mt-5 rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)]/70 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--tn-text)]">Software updates</p>
+              <p className="mt-1 text-xs leading-5 text-[var(--tn-text-muted)]">
+                {updater.status === 'checking' && 'Checking GitHub for a newer version…'}
+                {updater.status === 'idle' && 'Update status has not been checked yet.'}
+                {updater.status === 'up-to-date' && 'You are using the latest version of TaskNest.'}
+                {updater.status === 'available' && `Version ${updater.availableVersion} is available.`}
+                {updater.status === 'downloading' && (updater.progress === null ? 'Downloading the update…' : `Downloading update… ${updater.progress}%`)}
+                {updater.status === 'installing' && 'The installer is starting. TaskNest will close to complete the update.'}
+                {updater.status === 'error' && 'The update check or installation could not be completed.'}
+                {updater.status === 'unsupported' && 'In-app updates are available in the Windows desktop app.'}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={updater.checkForUpdates}
+                disabled={updater.status === 'checking' || updater.status === 'downloading' || updater.status === 'installing'}
+                className={secondaryButton}
+              >
+                <RefreshCw size={15} className={updater.status === 'checking' ? 'animate-spin' : ''} />
+                Check for updates
+              </button>
+              {updater.updateAvailable && (
+                <button
+                  type="button"
+                  onClick={updater.installUpdate}
+                  disabled={updater.status === 'downloading' || updater.status === 'installing'}
+                  className={primaryButton}
+                >
+                  <Download size={15} />
+                  {updater.status === 'downloading' ? 'Downloading…' : 'Install update'}
+                </button>
+              )}
+            </div>
+          </div>
+          {updater.status === 'downloading' && updater.progress !== null && (
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--tn-border)]">
+              <div className="h-full rounded-full bg-[var(--tn-primary)] transition-[width]" style={{ width: `${updater.progress}%` }} />
+            </div>
+          )}
+          {updater.error && (
+            <p role="alert" className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs leading-5 text-red-300">
+              {updater.error}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="mt-4 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)]/70 p-4">
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--tn-text-subtle)]">Created by</p>
         <p className="mt-1 text-sm font-semibold text-[var(--tn-text)]">Arnab Saha</p>
         <p className="mt-1 text-xs leading-5 text-[var(--tn-text-subtle)]">Design and development</p>

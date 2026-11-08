@@ -21,6 +21,7 @@ import KanbanBoard from './components/tasks/KanbanBoard'
 import CalendarPage from './components/calendar/CalendarPage'
 import NotificationsCenter from './components/notifications/NotificationsCenter'
 import { usePersistentValue } from './hooks/usePersistentValue'
+import { useAppUpdater } from './hooks/useAppUpdater'
 import { useNotificationScheduler, type TaskNotification } from './hooks/useNotificationScheduler'
 
 import { buildCategoryTree } from './utils/categories'
@@ -77,6 +78,13 @@ function App() {
   // --------------------------------------------------
   // Navigation state
   // --------------------------------------------------
+
+  const updater = useAppUpdater()
+  const [updateBannerDismissed, setUpdateBannerDismissed] = useState(false)
+
+  useEffect(() => {
+    if (updater.updateAvailable) setUpdateBannerDismissed(false)
+  }, [updater.updateAvailable, updater.availableVersion])
 
   const [activeNav, setActiveNav] = useState('Overview')
 
@@ -618,6 +626,31 @@ function App() {
           hasUnread={hasUnreadNotifications}
         />
         <main className="app-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-[var(--tn-bg)] text-[var(--tn-text)]">
+        {updater.updateAvailable && !updateBannerDismissed && (
+          <div className="mx-5 mt-4 flex flex-col gap-3 rounded-xl border border-[var(--tn-primary)]/30 bg-[var(--tn-primary)]/8 p-4 sm:mx-7 sm:flex-row sm:items-center sm:justify-between lg:mx-9">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--tn-text)]">A TaskNest update is available</p>
+              <p className="mt-1 text-xs text-[var(--tn-text-muted)]">Version {updater.availableVersion} is ready to install.</p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={updater.installUpdate}
+                disabled={updater.status === 'downloading' || updater.status === 'installing'}
+                className="rounded-lg bg-[var(--tn-primary)] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[var(--tn-primary-hover)] disabled:cursor-wait disabled:opacity-60"
+              >
+                {updater.status === 'downloading' ? 'Downloading…' : 'Install update'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setUpdateBannerDismissed(true)}
+                className="rounded-lg border border-[var(--tn-border)] px-3.5 py-2 text-xs font-medium text-[var(--tn-text-muted)] transition hover:bg-[var(--tn-surface-muted)]"
+              >
+                Later
+              </button>
+            </div>
+          </div>
+        )}
         {/* Calendar */}
         {activeNav === 'Calendar' ? (
           <CalendarPage
@@ -635,6 +668,7 @@ function App() {
             settings={settings}
             updateSetting={updateSetting}
             resetSettings={resetSettings}
+            updater={updater}
           />
         ) : activeNav === 'Overview' &&
           !selectedCategoryId &&
