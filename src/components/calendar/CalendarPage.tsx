@@ -259,7 +259,7 @@ export default function CalendarPage({
       </div>
 
       <div className="flex min-h-0 flex-1">
-        {sidebarOpen && <aside className="hidden w-[270px] shrink-0 flex-col gap-4 border-r border-[var(--tn-border)] bg-[var(--tn-surface-muted)] p-4 xl:flex">
+        {sidebarOpen && <aside className="hidden w-[270px] shrink-0 flex-col gap-4 border-r border-[var(--tn-border)] bg-[var(--tn-bg)] p-4 xl:flex">
           {monthPicker}
           <div className="space-y-2">
             <div className="flex items-center justify-between"><h2 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--tn-text-subtle)]">Task filters</h2><SlidersHorizontal size={13} className="text-[var(--tn-text-subtle)]"/></div>

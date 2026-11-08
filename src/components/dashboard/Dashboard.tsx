@@ -32,10 +32,10 @@ interface Props {
 }
 
 const priorityStyles = {
-  Critical: 'text-rose-400 bg-rose-400/10',
-  High: 'text-orange-400 bg-orange-400/10',
-  Medium: 'text-amber-400 bg-amber-400/10',
-  Low: 'text-[var(--tn-text-muted)] bg-slate-400/10',
+  Critical: 'text-[var(--tn-priority-critical)] bg-[var(--tn-priority-critical)]/10',
+  High: 'text-[var(--tn-priority-high)] bg-[var(--tn-priority-high)]/10',
+  Medium: 'text-[var(--tn-priority-medium)] bg-[var(--tn-priority-medium)]/10',
+  Low: 'text-[var(--tn-priority-low)] bg-[var(--tn-priority-low)]/10',
 }
 
 const workspaceIcons: Record<
@@ -49,10 +49,10 @@ const workspaceIcons: Record<
 }
 
 const workspaceColors = [
-  'bg-violet-400',
-  'bg-sky-400',
-  'bg-amber-400',
-  'bg-emerald-400',
+  'var(--tn-chart-category-1)',
+  'var(--tn-chart-category-2)',
+  'var(--tn-chart-category-3)',
+  'var(--tn-chart-category-4)',
 ]
 
 const getTimeBasedGreeting = () => {
@@ -71,9 +71,27 @@ export default function Dashboard({
   onToggleTask,
   onViewAll,
   onSelectWorkspace,
-  onNavigateCalendar,
 }: Props) {
   const [greeting, setGreeting] = useState(getTimeBasedGreeting)
+  const [range, setRange] = useState<'week' | 'month' | 'all'>('week')
+  const today = new Date()
+  const dateLabel = today.toLocaleDateString(undefined, {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  })
+  const rangeLabel = range === 'week' ? 'This week' : range === 'month' ? 'This month' : 'All time'
+  const rangeStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  if (range === 'week') {
+    const day = (rangeStart.getDay() + 6) % 7
+    rangeStart.setDate(rangeStart.getDate() - day)
+  } else if (range === 'month') {
+    rangeStart.setDate(1)
+  }
+  const visibleTasks = range === 'all' ? tasks : tasks.filter((task) => {
+    const rawDate = task.createdAt || task.updatedAt || task.dueDate
+    if (!rawDate) return false
+    const taskDate = new Date(rawDate)
+    return !Number.isNaN(taskDate.getTime()) && taskDate >= rangeStart && taskDate <= today
+  })
 
   // Refresh periodically so the greeting also changes if the dashboard stays open.
   useEffect(() => {
@@ -84,20 +102,20 @@ export default function Dashboard({
     return () => window.clearInterval(intervalId)
   }, [])
 
-  const completed = tasks.filter(
+  const completed = visibleTasks.filter(
     (task) => task.status === 'Completed',
   ).length
 
-  const inProgress = tasks.filter(
+  const inProgress = visibleTasks.filter(
     (task) => task.status === 'In Progress',
   ).length
 
-  const pending = tasks.filter(
+  const pending = visibleTasks.filter(
     (task) => task.status === 'To Do',
   ).length
 
-  const completionPercentage = tasks.length
-    ? Math.round((completed / tasks.length) * 100)
+  const completionPercentage = visibleTasks.length
+    ? Math.round((completed / visibleTasks.length) * 100)
     : 0
 
   const getWorkspaceName = (workspaceId: string) =>
@@ -116,19 +134,22 @@ export default function Dashboard({
             {greeting}
           </h1>
 
-          <p className="mt-1 text-sm text-[var(--tn-text-subtle)]">
-            Here's what's happening across your workspaces.
-          </p>
+          <p className="mt-1 text-xs text-[var(--tn-text-muted)]">{dateLabel}</p>
         </div>
 
-        <button
-          type="button"
-          onClick={onNavigateCalendar}
-          className="flex items-center gap-2 rounded-lg border border-[var(--tn-border)] px-3 py-2 text-xs text-[var(--tn-text-muted)] transition-colors hover:bg-[var(--tn-surface-muted)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tn-primary)]"
-        >
+        <label className="flex items-center gap-2 text-xs text-[var(--tn-text-muted)]">
           <CalendarDays size={14} />
-          This week
-        </button>
+          <span className="sr-only">Dashboard date range</span>
+          <select
+            value={range}
+            onChange={(event) => setRange(event.target.value as 'week' | 'month' | 'all')}
+            className="rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-3 py-2 text-xs text-[var(--tn-text)] outline-none focus:border-[var(--tn-primary)]"
+          >
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+            <option value="all">All time</option>
+          </select>
+        </label>
       </section>
 
       <section className="rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)] p-5">
@@ -138,7 +159,7 @@ export default function Dashboard({
               Overall progress
             </h3>
             <p className="mt-1 text-xs text-[var(--tn-text-subtle)]">
-              Completion across all your tasks
+              Completion · {rangeLabel}
             </p>
           </div>
 
@@ -151,21 +172,21 @@ export default function Dashboard({
           <div
             className="transition-all"
             style={{
-              width: `${tasks.length ? (completed / tasks.length) * 100 : 0}%`,
+              width: `${visibleTasks.length ? (completed / visibleTasks.length) * 100 : 0}%`,
               backgroundColor: 'var(--tn-status-completed)',
             }}
           />
           <div
             className="transition-all"
             style={{
-              width: `${tasks.length ? (inProgress / tasks.length) * 100 : 0}%`,
+              width: `${visibleTasks.length ? (inProgress / visibleTasks.length) * 100 : 0}%`,
               backgroundColor: 'var(--tn-status-progress)',
             }}
           />
           <div
             className="transition-all"
             style={{
-              width: `${tasks.length ? (pending / tasks.length) * 100 : 0}%`,
+              width: `${visibleTasks.length ? (pending / visibleTasks.length) * 100 : 0}%`,
               backgroundColor: 'var(--tn-status-todo)',
             }}
           />
@@ -192,8 +213,8 @@ export default function Dashboard({
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Total tasks"
-          value={tasks.length}
-          note="Across all workspaces"
+          value={visibleTasks.length}
+          note={rangeLabel}
           icon={ListTodo}
           tone="primary"
         />
@@ -201,7 +222,7 @@ export default function Dashboard({
         <StatCard
           label="Completed"
           value={completed}
-          note="Tasks finished"
+          note={rangeLabel}
           icon={CircleCheck}
           tone="success"
         />
@@ -209,7 +230,7 @@ export default function Dashboard({
         <StatCard
           label="In progress"
           value={inProgress}
-          note="Currently working on"
+          note={rangeLabel}
           icon={Activity}
           tone="info"
         />
@@ -217,13 +238,13 @@ export default function Dashboard({
         <StatCard
           label="To do"
           value={pending}
-          note="Waiting to be started"
+          note={rangeLabel}
           icon={Clock3}
           tone="warning"
         />
       </section>
 
-      <GraphCards tasks={tasks} categories={categories} />
+      <GraphCards tasks={visibleTasks} allTasks={tasks} categories={categories} range={range} rangeLabel={rangeLabel} />
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.6fr_1fr]">
         <div className="overflow-hidden rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)]">
@@ -233,7 +254,7 @@ export default function Dashboard({
                 Recent tasks
               </h3>
               <p className="mt-1 text-[11px] text-[var(--tn-text-subtle)]">
-                Your latest activity across workspaces
+                Latest activity · {rangeLabel}
               </p>
             </div>
 
@@ -247,13 +268,13 @@ export default function Dashboard({
           </div>
 
           <div className="divide-y divide-[var(--tn-border)]">
-            {tasks.length === 0 && (
+            {visibleTasks.length === 0 && (
               <p className="px-5 py-8 text-center text-xs text-[var(--tn-text-subtle)]">
                 No tasks yet. Create your first task to get started.
               </p>
             )}
 
-            {tasks.slice(0, 8).map((task) => (
+            {visibleTasks.slice(0, 8).map((task) => (
               <div
                 key={task.id}
                 className="group flex items-center gap-3 px-5 py-3.5 transition hover:bg-[var(--tn-surface-muted)]"
@@ -308,7 +329,7 @@ export default function Dashboard({
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-[var(--tn-text)]">Workspaces</h3>
               <p className="mt-1 text-[11px] text-[var(--tn-text-subtle)]">
-                Your areas of focus
+                Your areas of focus · {rangeLabel}
               </p>
             </div>
 
@@ -316,15 +337,15 @@ export default function Dashboard({
               {workspaces.map((workspace, index) => {
                 const Icon = workspaceIcons[workspace.icon] ?? User
 
-                const count = tasks.filter(
+                const count = visibleTasks.filter(
                   (task) => task.workspaceId === workspace.id,
                 ).length
 
-                const workspaceTaskCount = tasks.filter(
+                const workspaceTaskCount = visibleTasks.filter(
                   (task) => task.workspaceId === workspace.id,
                 ).length
 
-                const completedCount = tasks.filter(
+                const completedCount = visibleTasks.filter(
                   (task) =>
                     task.workspaceId === workspace.id &&
                     task.status === 'Completed',
@@ -350,14 +371,17 @@ export default function Dashboard({
                         {workspace.name}
                       </p>
                       <p className="mt-1 text-[10px] text-[var(--tn-text-subtle)]">
-                        {count} tasks
+                        {count} {count === 1 ? "task" : "tasks"}
                       </p>
                     </div>
 
                     <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[var(--tn-surface-muted)]">
                       <div
-                        className={`h-full rounded-full ${workspaceColors[index % workspaceColors.length]}`}
-                        style={{ width: `${progress}%` }}
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${progress}%`,
+                          backgroundColor: workspaceColors[index % workspaceColors.length],
+                        }}
                       />
                     </div>
                   </button>

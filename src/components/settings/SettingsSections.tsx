@@ -476,21 +476,65 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
       <div className="space-y-6">
 
-        <section><Heading title="Backup and restore" description="Keep a portable copy of your TaskNest workspace or restore it from a backup." /><Card>
+        <section>
+          <Heading
+            title="Backup and restore"
+            description="Keep a portable copy of your TaskNest workspace or restore it from a backup."
+          />
+          <Card>
+            <div className="flex flex-col gap-4">
+              <div className="flex min-w-0 items-center gap-3.5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] text-[var(--tn-primary)]">
+                  <HardDrive size={19} strokeWidth={1.9} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold leading-5 text-[var(--tn-text)]">
+                    Your TaskNest backup
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--tn-text-subtle)]">
+                    Export your tasks, workspaces and preferences, or restore them from a backup file.
+                  </p>
+                </div>
+              </div>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--tn-border)] pt-4">
+                <button
+                  type="button"
+                  className={`${primaryButton} min-h-10 whitespace-nowrap px-3.5`}
+                  onClick={exportData}
+                >
+                  <Download size={15} />
+                  Export backup
+                </button>
+                <button
+                  type="button"
+                  className={`${secondaryButton} min-h-10 whitespace-nowrap px-3.5`}
+                  onClick={() => fileInput.current?.click()}
+                >
+                  <Upload size={15} />
+                  Import backup
+                </button>
+              </div>
+            </div>
 
-            <div className="flex items-start gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--tn-primary)]/10 text-indigo-400"><HardDrive size={19} /></div><div><p className="text-sm font-medium text-[var(--tn-text)]">Your TaskNest backup</p></div></div>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={importData}
+            />
 
-            <div className="flex flex-wrap gap-2"><button type="button" className={primaryButton} onClick={exportData}><Download size={16} />Export backup</button><button type="button" className={secondaryButton} onClick={() => fileInput.current?.click()}><Upload size={16} />Import backup</button></div>
-
-          </div>
-
-          <input ref={fileInput} type="file" accept=".json,application/json" className="hidden" onChange={importData} />
-
-          {importError && <p role="alert" className="mt-4 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-300">{importError}</p>}
-
-        </Card></section>
+            {importError && (
+              <p
+                role="alert"
+                className="mt-4 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-300"
+              >
+                {importError}
+              </p>
+            )}
+          </Card>
+        </section>
 
         <section><Heading title="Your local data" description="See what information TaskNest saves on this device." /><Card>
           <div className="mb-5 flex items-start gap-3">

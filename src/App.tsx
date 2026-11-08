@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import Sidebar from './components/layout/Sidebar'
-import Header from './components/layout/Header'
+import TitleBar from './components/layout/TitleBar'
 
 import Dashboard from './components/dashboard/Dashboard'
 
@@ -37,6 +37,8 @@ import type {
   Task,
   Workspace,
 } from './types'
+
+
 
 function App() {
   // --------------------------------------------------
@@ -598,7 +600,17 @@ function App() {
   // --------------------------------------------------
 
   return (
-    <div className="app-shell flex h-dvh min-h-0 w-full overflow-hidden">
+    <div className="app-window flex h-dvh min-h-0 w-full flex-col overflow-hidden">
+      <TitleBar
+        collapsed={sidebarCollapsed}
+        onToggleSidebar={() => setSidebarCollapsed((current) => !current)}
+        title={activeNav}
+        onNewTask={() => setNewTaskOpen(true)}
+        onNewWorkspace={() => setNewWorkspaceOpen(true)}
+        onNotifications={() => setNotificationsOpen((open) => !open)}
+        hasUnread={hasUnreadNotifications}
+      />
+      <div className="app-shell flex min-h-0 w-full flex-1 overflow-hidden">
       {/* Full-height sidebar occupies the left edge of the application. */}
       <Sidebar
         workspaces={categoryTrees}
@@ -613,18 +625,10 @@ function App() {
         expanded={expanded}
         onToggleExpanded={toggleExpanded}
         collapsed={sidebarCollapsed}
-        onToggleSidebar={() => setSidebarCollapsed((current) => !current)}
       />
 
       {/* Header and page content begin to the right of the sidebar. */}
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <Header
-          title={activeNav}
-          onNewTask={() => setNewTaskOpen(true)}
-          onNewWorkspace={() => setNewWorkspaceOpen(true)}
-          onNotifications={() => setNotificationsOpen((open) => !open)}
-          hasUnread={hasUnreadNotifications}
-        />
         <main className="app-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-[var(--tn-bg)] text-[var(--tn-text)]">
         {updater.updateAvailable && !updateBannerDismissed && (
           <div className="mx-5 mt-4 flex flex-col gap-3 rounded-xl border border-[var(--tn-primary)]/30 bg-[var(--tn-primary)]/8 p-4 sm:mx-7 sm:flex-row sm:items-center sm:justify-between lg:mx-9">
@@ -878,6 +882,7 @@ function App() {
           onDelete={handleDeleteTask}
         />
       )}
+      </div>
     </div>
   )
 }

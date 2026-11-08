@@ -34,8 +34,6 @@ import {
   Heart,
   Inbox,
   LayoutDashboard,
-  PanelLeft,
-  PanelLeftClose,
   Layers,
   Leaf,
   Lightbulb,
@@ -70,8 +68,6 @@ import {
 import type { LucideIcon } from 'lucide-react'
 
 import CategoryTree from '../CategoryTree'
-import taskNestLockup from '../../assets/brand/tasknest-lockup.svg'
-import taskNestLockupDark from '../../assets/brand/tasknest-lockup-dark.svg'
 import WorkspaceEditorModal from '../workspace/WorkspaceEditorModal'
 import type { Category, Workspace } from '../../types'
 import type { CategoryNode } from '../../utils/categories'
@@ -93,7 +89,6 @@ interface Props {
   expanded: string[]
   onToggleExpanded: (name: string) => void
   collapsed: boolean
-  onToggleSidebar: () => void
 }
 
 type FormState = { mode: 'edit'; workspace: Workspace } | null
@@ -370,7 +365,6 @@ export default function Sidebar({
   expanded,
   onToggleExpanded,
   collapsed,
-  onToggleSidebar,
 }: Props) {
   const [form, setForm] = useState<FormState>(null)
   const [menu, setMenu] = useState<MenuState | null>(null)
@@ -424,61 +418,9 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className={`relative z-20 flex h-full min-h-0 shrink-0 flex-col bg-[var(--tn-surface-muted)] transition-[width] duration-200 ease-in-out ${collapsed ? 'w-[72px]' : 'w-[260px]'}`} aria-label="Sidebar navigation">
-        {/* Brand row: the toggle is always visible when expanded and overlays the logo on hover when collapsed. */}
-        <div className={`group relative flex h-[72px] shrink-0 items-center ${collapsed ? 'justify-center px-2' : 'gap-3 px-5'}`}>
-          {collapsed ? (
-            <svg
-              role="img"
-              aria-label="TaskNest"
-              viewBox="0 0 320 300"
-              className="h-10 w-10 shrink-0 text-[var(--tn-primary)]"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g transform="translate(-8 0)" fill="currentColor">
-                <g
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="11.5"
-                  strokeLinecap="round"
-                >
-                  <path d="M237.5 45.5 L248.5 23.5" />
-                  <path d="M259.5 60 L279 41.5" />
-                  <path d="M269.5 83 L294.5 76.5" />
-                </g>
-                <path
-                  fillRule="evenodd"
-                  d="M90.2 135.5 A80 80 0 1 1 249.8 134 C226 151.5 198.5 169.5 168.5 185.8 C141 171 114.5 153.5 90.2 135.5 Z M161.8 153.2 C159.5 153.2 157.3 152.3 155.6 150.6 L138.2 133.2 C134.8 129.8 134.8 124.2 138.2 120.8 C141.6 117.4 147.2 117.4 150.6 120.8 L161.8 132 L191.4 100.4 C194.7 96.9 200.3 96.8 203.8 100.1 C207.3 103.4 207.4 109 204.1 112.5 L168.2 150.5 C166.5 152.2 164.2 153.2 161.8 153.2 Z"
-                />
-                <path d="M179.5 196.2 C218 176.5 256.5 153.5 294.5 133 C302.5 128.6 310.2 133.8 308.8 143.2 C305.8 166.8 296.2 194.5 282.5 215.2 C279.8 218.5 274.5 219.2 267.5 219.2 C237.5 219 207 209.8 179.5 196.2 Z" />
-                <path d="M26.2 142.5 C25 132.8 33.2 128.2 41.8 133.2 C86.5 159.2 134.5 189.2 184.5 210.8 C214.5 223.8 244.2 229 274.2 228.5 C252 261.8 212.5 281 167.5 281 C93.5 281 34.2 221.5 26.2 142.5 Z" />
-              </g>
-            </svg>
-          ) : (
-            <>
-              <img src={taskNestLockup} alt="TaskNest" className="tn-brand-light h-10 min-w-0 flex-1 object-contain object-left" />
-              <img src={taskNestLockupDark} alt="TaskNest" className="tn-brand-dark h-10 min-w-0 flex-1 object-contain object-left" />
-            </>
-          )}
-          <button
-            type="button"
-            onClick={onToggleSidebar}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-expanded={!collapsed}
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--tn-text-muted)] transition-colors hover:bg-[var(--tn-surface-hover)] hover:text-[var(--tn-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 ${
-              collapsed
-                ? 'absolute inset-0 m-auto bg-[var(--tn-surface-muted)]/95 opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
-                : 'opacity-100'
-            }`}
-          >
-            {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
-          </button>
-        </div>
-
+      <aside className={`relative z-20 flex h-full min-h-0 shrink-0 flex-col bg-[var(--tn-surface-muted)] transition-[width] duration-200 ease-in-out ${collapsed ? 'w-[72px]' : 'w-[240px]'}`} aria-label="Sidebar navigation">
         {/* Scrollable area */}
-        <div className={`app-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain py-4 ${collapsed ? 'px-2' : 'px-3'}`}>
+        <div className={`app-scrollbar tn-sidebar-scroll-area min-h-0 flex-1 overflow-y-auto overscroll-y-contain py-4 ${collapsed ? 'is-collapsed px-2' : 'px-3'}`}>
           {/* Primary navigation */}
           <nav aria-label="Main">
             <ul className={collapsed ? 'space-y-1' : 'space-y-0.5'}>
