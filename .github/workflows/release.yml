@@ -1,3 +1,4 @@
+
 name: Publish TaskNest release
 
 on:
@@ -8,10 +9,16 @@ on:
 permissions:
   contents: write
 
+# Prevent two releases from publishing simultaneously.
+concurrency:
+  group: tasknest-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish-windows:
     name: Build and publish Windows installer
     runs-on: windows-latest
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -21,6 +28,24 @@ jobs:
         with:
           node-version: 22
           cache: npm
+
+      - name: Validate release tag and application version
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          $tag = "${{ github.ref_name }}"
+          $expectedTag = "v$version"
+
+          Write-Host "Application version: $version"
+          Write-Host "Git release tag: $tag"
+          Write-Host "Expected tag: $expectedTag"
+
+          if ($tag -ne $expectedTag) {
+            Write-Error "Release tag mismatch. Expected '$expectedTag', received '$tag'."
+            exit 1
+          }
+
+          Write-Host "Release tag validation successful."
 
       - name: Set up stable Rust
         uses: dtolnay/rust-toolchain@stable
@@ -39,14 +64,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
         with:
           tagName: ${{ github.ref_name }}
           releaseName: TaskNest ${{ github.ref_name }}
+
           releaseBody: |
             TaskNest desktop release ${{ github.ref_name }}.
 
-            Download the Windows installer from the assets below. Existing TaskNest desktop installations can install this update from within the app.
+            Download the Windows installer from the assets below.
+            Existing TaskNest desktop installations can install this update
+            directly from within the application.
+
           releaseDraft: false
           prerelease: false
+
+          # Build only the Windows NSIS installer.
+          args: --bundles nsis
+
+          # Generate and upload the updater manifest.
           uploadUpdaterJson: true
           updaterJsonPreferNsis: true
+          uploadUpdaterSignatures: true

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { isTauri } from '@tauri-apps/api/core'
 import { check } from '@tauri-apps/plugin-updater'
 
@@ -24,6 +25,9 @@ export interface AppUpdaterControls {
   installUpdate: () => void
 }
 
+// Maximum time allowed for an update availability request.
+const UPDATE_CHECK_TIMEOUT = 30000
+
 /** Checks for signed desktop releases once at launch and exposes manual controls. */
 export function useAppUpdater(): AppUpdaterControls {
   const [update, setUpdate] = useState<AvailableUpdate | null>(null)
@@ -33,29 +37,47 @@ export function useAppUpdater(): AppUpdaterControls {
   const [progress, setProgress] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Prevent multiple simultaneous update checks.
+  const checkingRef = useRef(false)
+
   const checkForUpdates = useCallback(async () => {
     if (!isTauri()) {
       setStatus('unsupported')
       return
     }
 
+    if (checkingRef.current) return
+
+    checkingRef.current = true
     setStatus('checking')
     setError(null)
     setProgress(null)
 
     try {
-      const nextUpdate = await check()
+      const nextUpdate = await check({
+        timeout: UPDATE_CHECK_TIMEOUT,
+      })
+
       setUpdate(nextUpdate)
       setStatus(nextUpdate ? 'available' : 'up-to-date')
     } catch (checkError) {
       console.error('TaskNest update check failed:', checkError)
+
       setUpdate(null)
       setStatus('error')
-      setError(
+
+      const message =
         checkError instanceof Error
           ? checkError.message
-          : 'Could not check for updates. Please try again later.',
+          : String(checkError)
+
+      setError(
+        /timeout|timed out/i.test(message)
+          ? 'Update check timed out. Please check your internet connection and try again.'
+          : message || 'Could not check for updates. Please try again later.',
       )
+    } finally {
+      checkingRef.current = false
     }
   }, [])
 
@@ -76,9 +98,13 @@ export function useAppUpdater(): AppUpdaterControls {
           setProgress(0)
         } else if (event.event === 'Progress') {
           downloadedBytes += event.data.chunkLength
+
           if (totalBytes && totalBytes > 0) {
             setProgress(
-              Math.min(100, Math.round((downloadedBytes / totalBytes) * 100)),
+              Math.min(
+                100,
+                Math.round((downloadedBytes / totalBytes) * 100),
+              ),
             )
           }
         } else if (event.event === 'Finished') {
@@ -90,6 +116,7 @@ export function useAppUpdater(): AppUpdaterControls {
       setStatus('installing')
     } catch (installError) {
       console.error('TaskNest update installation failed:', installError)
+
       setStatus('error')
       setError(
         installError instanceof Error
@@ -102,10 +129,10 @@ export function useAppUpdater(): AppUpdaterControls {
   useEffect(() => {
     if (!isTauri()) return
 
-    // Delay the request slightly so the main window can finish rendering first.
+    // Allow the application window to render before checking.
     const timeoutId = window.setTimeout(() => {
       void checkForUpdates()
-    }, 1500)
+    }, 500)
 
     return () => window.clearTimeout(timeoutId)
   }, [checkForUpdates])
