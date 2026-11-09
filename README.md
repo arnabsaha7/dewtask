@@ -1,287 +1,221 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,10,20&height=220&section=header&text=TaskNest&fontSize=72&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Organize%20your%20work.%20Structure%20your%20goals.%20Stay%20focused.&descAlignY=60&descSize=18" alt="TaskNest banner" width="100%" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=1F7A6D&height=200&section=header&text=TaskNest&fontSize=64&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=Organize%20your%20work.%20Structure%20your%20goals.%20Stay%20focused.&descAlignY=62&descSize=17" alt="TaskNest banner" width="100%" />
 
 <br />
 
-**An offline-first workspace and task management application for people who want a clear, structured place to manage projects and everyday work.**
+**A fast, offline-first task manager for people who think in projects, not just to-do lists.**
+Workspaces, nested categories, and a clean List/Kanban workflow, with all your data stored on your own device.
 
 <br />
 
-<img src="https://img.shields.io/badge/React-Frontend-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
-<img src="https://img.shields.io/badge/TypeScript-Language-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-<img src="https://img.shields.io/badge/Vite-Tooling-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
-<img src="https://img.shields.io/badge/Tailwind_CSS-Styling-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-
-<img src="https://img.shields.io/badge/Tauri_2-Desktop_Runtime-FFC131?style=for-the-badge&logo=tauri&logoColor=black" alt="Tauri" />
-<img src="https://img.shields.io/badge/Rust-Native_Backend-DEA584?style=for-the-badge&logo=rust&logoColor=black" alt="Rust" />
-<img src="https://img.shields.io/badge/SQLite-Local_Persistence-0F80CC?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
+[![Latest release](https://img.shields.io/github/v/release/arnabsaha7/tasknest?style=flat-square&color=1F7A6D&label=release)](https://github.com/arnabsaha7/tasknest/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/arnabsaha7/tasknest/total?style=flat-square&color=3FB5A3&label=downloads)](https://github.com/arnabsaha7/tasknest/releases)
+![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square&logo=windows&logoColor=white)
+![Offline-first](https://img.shields.io/badge/offline--first-yes-2ea44f?style=flat-square)
+![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202%20%2B%20React-F2A33A?style=flat-square)
+<!-- TODO: add a license badge once a license is chosen -->
 
 <br />
 
-<img src="https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square&logo=windows&logoColor=white" alt="Windows" />
-<img src="https://img.shields.io/badge/Offline--First-Yes-2ea44f?style=flat-square" alt="Offline-first" />
-<img src="https://img.shields.io/badge/Android-Planned-a855f7?style=flat-square&logo=android&logoColor=white" alt="Android planned" />
-<img src="https://img.shields.io/badge/PRs-Welcome-ff69b4?style=flat-square" alt="PRs welcome" />
-
-<br /><br />
-
-[**✨ Features**](#-features) &nbsp;•&nbsp;
-[**🖼️ Preview**](#️-preview) &nbsp;•&nbsp;
-[**⬇️ Download**](#️-download--install) &nbsp;•&nbsp;
-[**🚀 Getting Started**](#-getting-started) &nbsp;•&nbsp;
-[**🏗️ Architecture**](#️-how-it-works) &nbsp;•&nbsp;
-[**🗺️ Roadmap**](#️-roadmap) &nbsp;•&nbsp;
-[**🤝 Contributing**](#-contributing)
+[Features](#features) &nbsp;·&nbsp;
+[Screenshots](#screenshots) &nbsp;·&nbsp;
+[Download](#download-and-install) &nbsp;·&nbsp;
+[Build from source](#build-from-source) &nbsp;·&nbsp;
+[Architecture](#architecture) &nbsp;·&nbsp;
+[Roadmap](#roadmap) &nbsp;·&nbsp;
+[Contributing](#contributing)
 
 </div>
 
-<br />
-
 ---
 
-## 🖼️ Preview
+## Screenshots
 
 <table align="center">
   <tr>
-    <td align="center" width="33%">
-      <img src="docs/screenshots/overview.png" alt="TaskNest dashboard" width="100%" />
+    <td align="center" width="50%">
+      <img src="docs/screenshots/overview.png" alt="TaskNest dashboard showing work at a glance" width="100%" />
+      <br /><sub><b>Dashboard</b> · your work at a glance</sub>
     </td>
-    <td align="center" width="33%">
-      <img src="docs/screenshots/workspace-management.png" alt="TaskNest workspace management screen" width="100%" />
-    </td>
-    <td align="center" width="33%">
-      <img src="docs/screenshots/settings.png" alt="TaskNest settings and application information screen" width="100%" />
+    <td align="center" width="50%">
+      <img src="docs/screenshots/workspace.png" alt="TaskNest workspace screen with categories and subcategories" width="100%" />
+      <br /><sub><b>Workspaces</b> · categories and subcategories</sub>
     </td>
   </tr>
   <tr>
-    <td align="center"><sub><b>Dashboard</b><br />Your work at a glance</sub></td>
-    <td align="center"><sub><b>Workspace Management</b><br />Workspaces, categories, and subcategories</sub></td>
-    <td align="center"><sub><b>Settings</b><br />Themes, preferences, and app information</sub></td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/calendar.png" alt="TaskNest calendar screen" width="100%" />
+      <br /><sub><b>Calendar</b> · plan and track your schedule</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/settings.png" alt="TaskNest settings screen with themes and preferences" width="100%" />
+      <br /><sub><b>Settings</b> · themes, preferences, backups</sub>
+    </td>
   </tr>
 </table>
 
-> 📸 More screenshots will be added as additional screens are finalized.
+<!-- TODO: add a Kanban view screenshot and a dark-theme screenshot. Kanban is a headline feature and is not shown yet. -->
 
 ---
 
-## 📖 About
+## Why TaskNest
 
-**TaskNest** is a personal productivity application that brings **workspaces**, **hierarchical categories**, and **task management** into one organized environment.
+Most to-do apps are either a flat list or a heavyweight project tool with an account and a subscription. TaskNest sits in between:
 
-Create separate workspaces for different projects or areas of life, break them down into categories and subcategories, and keep track of the work that needs to get done.
-
-> 🔒 **Offline-first, local-data approach.** The desktop application keeps core productivity features available without a cloud account or a continuous internet connection. Your data stays on your device.
-
----
-
-## ✨ Features
-
-| | Feature | Description |
-|:-:|---|---|
-| 🗂️ | **Workspaces** | Separate projects, responsibilities, and areas of life into dedicated workspaces. |
-| 🌳 | **Hierarchical organization** | Structure categories and subcategories within a workspace. |
-| ✅ | **Task management** | Create, edit, organize, and track tasks. |
-| 🚦 | **Priorities & statuses** | Assign priorities and track task progress. |
-| 📋 | **List & Kanban views** | Work with tasks in different visual layouts. |
-| 🏷️ | **Tags & checklists** | Add useful organization and task-level detail. |
-| 🎨 | **Themes & preferences** | Customize the appearance and regional settings. |
-| 💾 | **Backup & restore** | Export data and preferences to a portable JSON backup and restore them later. |
-| 📴 | **Offline-first workflow** | Use core task-management features without depending on a cloud service. |
+- **Structure without overhead.** Separate workspaces for each project or area of life, with categories and subcategories nested as deep as you need.
+- **Your data stays yours.** No account, no cloud, no internet requirement. Everything lives in a local SQLite database on your machine.
+- **Portable by design.** One-click JSON export and import, so you are never locked in.
 
 ---
 
-## 🧰 Tech Stack
+## Features
 
-<table>
-  <tr>
-    <th align="left">Layer</th>
-    <th align="left">Technology</th>
-    <th align="left">Role</th>
-  </tr>
-  <tr>
-    <td rowspan="5"><b>🎨 Frontend</b></td>
-    <td><img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" /></td>
-    <td>Component-based user interface</td>
-  </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></td>
-    <td>Application language and type safety</td>
-  </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" /></td>
-    <td>Development server and build tooling</td>
-  </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></td>
-    <td>Utility-first styling</td>
-  </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/Zustand-433E38?style=flat-square" alt="Zustand" /> &nbsp; <img src="https://img.shields.io/badge/dnd--kit-E91E63?style=flat-square" alt="dnd-kit" /> &nbsp; <img src="https://img.shields.io/badge/Lucide-F56565?style=flat-square" alt="Lucide React" /></td>
-    <td>State management, drag-and-drop, and icons</td>
-  </tr>
-  <tr>
-    <td rowspan="3"><b>🖥️ Desktop</b></td>
-    <td><img src="https://img.shields.io/badge/Tauri_2-FFC131?style=flat-square&logo=tauri&logoColor=black" alt="Tauri 2" /></td>
-    <td>Native desktop application runtime</td>
-  </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/Rust-DEA584?style=flat-square&logo=rust&logoColor=black" alt="Rust" /></td>
-    <td>Native backend</td>
-  </tr>
-  <tr>
-    <td><img src="https://img.shields.io/badge/SQLite-0F80CC?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" /></td>
-    <td>Local desktop persistence</td>
-  </tr>
-</table>
-
----
-
-## 🏗️ How It Works
-
-TaskNest separates the user interface from platform-specific persistence, so features are not tightly coupled to a single storage implementation.
-
-```mermaid
-flowchart LR
-    UI["⚛️ React + TypeScript UI"] --> Store["🐻 Zustand State"]
-    Store --> Abstraction["🔌 Storage Interface"]
-    Abstraction -->|Browser dev| Browser[("🌐 Browser Storage")]
-    Abstraction -->|Desktop| Tauri["🦀 Tauri + Rust"]
-    Tauri --> SQLite[("🗄️ SQLite")]
-
-    style UI fill:#61DAFB,stroke:#0b7285,color:#000
-    style Store fill:#a78bfa,stroke:#5b21b6,color:#000
-    style Abstraction fill:#fbbf24,stroke:#b45309,color:#000
-    style Browser fill:#94a3b8,stroke:#334155,color:#000
-    style Tauri fill:#FFC131,stroke:#b45309,color:#000
-    style SQLite fill:#0F80CC,stroke:#075985,color:#fff
-```
-
-| Part | Responsibility |
+| Feature | What it gives you |
 |---|---|
-| **Frontend** | React and TypeScript power the application interface. |
-| **Desktop runtime** | Tauri packages the frontend as a native desktop application. |
-| **Native backend** | Rust provides desktop-side functionality. |
-| **Desktop persistence** | SQLite stores structured application data locally. |
-| **Storage abstraction** | The frontend talks to a storage interface rather than a specific implementation. |
-
-> 🎯 **Current primary target:** Windows desktop. &nbsp;·&nbsp; 📱 **Future goal:** Android support.
+| **Workspaces** | Dedicated spaces for separate projects, responsibilities, or areas of life. |
+| **Hierarchical organization** | Categories and subcategories inside each workspace. |
+| **Task management** | Create, edit, organize, and track tasks. |
+| **Priorities and statuses** | Mark what matters and see progress at a glance. |
+| **List and Kanban views** | Switch layouts to match how you like to work; drag and drop to reorder. |
+| **Tags and checklists** | Add lightweight labels and task-level detail. |
+| **Calendar** | See and plan your schedule. |
+| **Themes and preferences** | Customize appearance and regional settings. |
+| **Backup and restore** | Export tasks, categories, tags, workspaces, and preferences to JSON, and restore them later. |
+| **Offline-first** | Core features work with no connection and no account. |
 
 ---
 
-## ⬇️ Download & Install
+## Download and install
 
-The easiest way to use TaskNest is with the ready-made Windows installer. No build tools required.
+The quickest way to use TaskNest is the Windows installer. No build tools required.
 
 <p align="center">
   <a href="https://github.com/arnabsaha7/tasknest/releases/latest">
-    <img src="https://img.shields.io/badge/⬇️_Download_Latest_Installer-Windows-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download the latest TaskNest installer" />
+    <img src="https://img.shields.io/badge/Download_latest_installer-Windows-1F7A6D?style=for-the-badge&logo=windows&logoColor=white" alt="Download the latest TaskNest installer" />
   </a>
 </p>
 
-1. 🌐 Open the [**Releases page**](https://github.com/arnabsaha7/tasknest/releases/latest).
-2. 📥 Under **Assets**, download the latest `*-setup.exe` installer.
-3. ▶️ Run the installer and follow the on-screen steps.
-4. 🎉 Launch **TaskNest** from the Start menu.
+1. Open the [Releases page](https://github.com/arnabsaha7/tasknest/releases/latest).
+2. Under **Assets**, download the latest `*-setup.exe`.
+3. Run the installer and follow the prompts.
+4. Launch **TaskNest** from the Start menu.
 
-> 💡 **Always use the latest installer.** Each release includes the newest features and fixes. Before upgrading, export a backup from **Settings → Data & Storage**.
+> **Upgrading?** Export a backup first from **Settings → Data & Storage**, then install the newer version.
 
-> 🛡️ **Windows SmartScreen:** if Windows shows a warning for an unrecognized app, choose **More info → Run anyway**.
+> **Windows SmartScreen:** if Windows warns about an unrecognized app, choose **More info → Run anyway**.
+<!-- TODO: add one line explaining why (e.g. the installer is not yet code-signed). Users trust the workaround more when they know the reason. -->
 
-Want to build it yourself or contribute? Continue below. 👇
+**Requirements:** Windows 10 or later (64-bit) with the Microsoft Edge WebView2 Runtime, which is preinstalled on current Windows versions.
+<!-- TODO: confirm the minimum supported Windows version. -->
 
 ---
 
-## 🚀 Getting Started
+## Data, backups, and privacy
 
-> 🧑‍💻 This section is for **developers** who want to run or build TaskNest from source.
+TaskNest is built around local data ownership.
 
-### 📋 Prerequisites
+- The desktop app stores its data in a local SQLite database on your device.
+- Core features work fully offline.
+- There is no automatic cloud sync.
+<!-- TODO: if true, add "TaskNest sends no telemetry and makes no network requests." This is a strong trust signal for an offline-first app. -->
+<!-- TODO: document where the database file lives on Windows, so users can find it. -->
 
-For Windows desktop development, install:
+**Backups.** Open **Settings → Data & Storage** to export or import. An export is a single portable JSON file containing tasks, categories, tags, workspaces, and preferences. Importing **replaces** your current data after you confirm.
 
-- 🟢 [Node.js](https://nodejs.org/) (includes npm)
-- 🦀 [Rust](https://www.rust-lang.org/tools/install) stable toolchain
-- 🧱 [Microsoft Visual Studio 2022](https://visualstudio.microsoft.com/) or Build Tools with the **Desktop development with C++** workload
-- 🌐 [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
+> Keep exported backups somewhere other than the machine running TaskNest. A backup on the same disk will not help if the disk fails.
 
-> Ensure the Rust MSVC toolchain and Windows C++ linker are available.
+---
 
-### 1️⃣ Clone the repository
+## Tech stack
+
+| Layer | Technology | Role |
+|---|---|---|
+| Frontend | React, TypeScript | Interface and type safety |
+| | Vite | Dev server and build tooling |
+| | Tailwind CSS | Styling |
+| | Zustand, dnd-kit, Lucide | State, drag and drop, icons |
+| Desktop | Tauri 2 | Native desktop runtime |
+| | Rust | Native backend |
+| | SQLite | Local persistence |
+
+---
+
+## Architecture
+
+The UI is separated from platform-specific persistence behind a storage interface, so features are not coupled to one storage implementation. The same frontend runs in the browser (for development) and in the desktop app.
+
+```mermaid
+flowchart LR
+    UI["React + TypeScript UI"] --> Store["Zustand state"]
+    Store --> Abstraction["Storage interface"]
+    Abstraction -->|Browser dev| Browser[("Browser storage")]
+    Abstraction -->|Desktop| Tauri["Tauri + Rust"]
+    Tauri --> SQLite[("SQLite")]
+
+    style UI fill:#3FB5A3,stroke:#1F7A6D,color:#000
+    style Store fill:#e6f4f1,stroke:#1F7A6D,color:#000
+    style Abstraction fill:#F2A33A,stroke:#b45309,color:#000
+    style Browser fill:#e2e8f0,stroke:#475569,color:#000
+    style Tauri fill:#1F7A6D,stroke:#14534a,color:#fff
+    style SQLite fill:#14534a,stroke:#0b2e29,color:#fff
+```
+
+**Current target:** Windows desktop. **Planned:** Android.
+
+---
+
+## Build from source
+
+This section is for developers who want to run or build TaskNest themselves.
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (includes npm)
+- [Rust](https://www.rust-lang.org/tools/install) stable toolchain (MSVC)
+- [Visual Studio 2022](https://visualstudio.microsoft.com/) or Build Tools with the **Desktop development with C++** workload
+- [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
+<!-- TODO: pin the minimum Node.js version (e.g. add an "engines" field to package.json and mention it here). -->
+
+### Run
 
 ```bash
 git clone https://github.com/arnabsaha7/tasknest.git
 cd tasknest
-```
-
-### 2️⃣ Install dependencies
-
-```bash
 npm install
 ```
 
-### 3️⃣ Run the web development server
-
 ```bash
+# Web dev server (uses browser storage, not SQLite)
 npm run dev
-```
 
-Vite prints the local development URL in the terminal.
-
-> 💡 The browser version uses the browser storage implementation. For the native desktop experience and its local database integration, run the Tauri application.
-
-### 4️⃣ Run the desktop application
-
-```bash
+# Native desktop app (Tauri + SQLite)
 npm run tauri:dev
 ```
 
-> ⏳ The first run may take longer while Rust dependencies and native components are downloaded and compiled.
+The first desktop run is slower while Rust dependencies compile.
 
----
-
-## 📦 Build for Windows
-
-**Build the frontend:**
-
-```bash
-npm run build
-```
-
-**Build the Tauri desktop application and Windows installer:**
+### Build the Windows installer
 
 ```bash
 npm run tauri:build
 ```
 
-The NSIS installer is generated in:
+The NSIS installer is written to `src-tauri/target/release/bundle/nsis/` as a `*-setup.exe`. If the first build times out while Tauri downloads its NSIS tooling, retry once the tools are available locally.
 
-```text
-src-tauri/target/release/bundle/nsis/
-```
-
-Look for the generated `*-setup.exe` file.
-
-> ⚠️ **First-build note:** Tauri may need to download its NSIS packaging tools. If that download times out, the installer packaging step may need to be retried after the required tools are available locally.
-
----
-
-## 🛠️ Development Commands
+### Commands
 
 | Command | Purpose |
 |---|---|
-| `npm install` | Install frontend dependencies |
-| `npm run dev` | Start the Vite development server |
+| `npm run dev` | Vite development server |
 | `npm run build` | Build the frontend |
 | `npm run preview` | Preview the production frontend build |
-| `npm run lint` | Run the configured linter |
-| `npm run tauri:dev` | Run the native desktop application |
-| `npm run tauri:build` | Build the desktop application and installer |
-
----
+| `npm run lint` | Run the linter |
+| `npm run tauri:dev` | Run the native desktop app |
+| `npm run tauri:build` | Build the desktop app and installer |
 
 <details>
-<summary><b>📁 Project Structure</b> &nbsp;<sub>(click to expand)</sub></summary>
+<summary><b>Project structure</b></summary>
 
 <br />
 
@@ -289,116 +223,92 @@ Look for the generated `*-setup.exe` file.
 tasknest/
 ├── public/                  # Static assets
 ├── docs/
-│   └── screenshots/         # README and documentation screenshots
+│   └── screenshots/         # README screenshots
 ├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── layout/          # Application layout and navigation
+│   ├── components/
+│   │   ├── layout/          # App layout and navigation
 │   │   ├── settings/        # Settings screens
-│   │   ├── tasks/           # Task-related components
-│   │   └── workspaces/      # Workspace-related components
-│   ├── hooks/               # Application hooks
+│   │   ├── tasks/           # Task components
+│   │   └── workspaces/      # Workspace components
+│   ├── hooks/
 │   ├── themes/              # Theme definitions
 │   ├── types/               # TypeScript types
 │   ├── utils/               # Storage and utility modules
-│   ├── App.tsx              # Application root
-│   └── main.tsx             # Frontend entry point
+│   ├── App.tsx
+│   └── main.tsx
 ├── src-tauri/
 │   ├── capabilities/        # Tauri permissions
-│   ├── icons/               # Application icons
-│   ├── src/                 # Rust application and database code
-│   ├── Cargo.toml           # Rust dependencies
-│   └── tauri.conf.json      # Tauri configuration
+│   ├── icons/
+│   ├── src/                 # Rust app and database code
+│   ├── Cargo.toml
+│   └── tauri.conf.json
 ├── index.html
 ├── package.json
-├── package-lock.json
 ├── tsconfig.json
-├── vite.config.ts
-└── README.md
+└── vite.config.ts
 ```
-
-*The tree highlights the main areas of the project; individual files and folders may evolve during development.*
 
 </details>
 
 ---
 
-## 🔐 Data, Backups, and Privacy
+## Roadmap
 
-TaskNest is designed around **local data ownership**.
+Shipped:
 
-- 💻 The desktop application stores its working data on the device.
-- 📴 Core task-management functionality is designed to work offline.
-- ☁️ TaskNest does not currently provide automatic cloud synchronization.
-- 📤 Backup export creates a portable JSON file containing tasks, categories, tags, workspaces, and preferences.
-- 📥 Importing a backup replaces the current stored data and preferences after confirmation.
+- [x] Workspaces with categories and subcategories
+- [x] List and Kanban views, tags, checklists, priorities, statuses
+- [x] Calendar
+- [x] JSON backup and restore
+- [x] Windows installer
 
-To manage backups, open **Settings → Data & Storage** in the application.
+Planned:
 
-> 💡 **Tip:** Keep exported backups somewhere safe. A backup is only useful if you retain a copy outside the device where TaskNest is installed.
+- [ ] More flexible workspace navigation and hierarchy
+- [ ] Workflow automation and task auto-progression
+- [ ] Further task organization and productivity improvements
+- [ ] Continued desktop usability and performance work
+- [ ] Android support
+- [ ] Additional data-management capabilities
 
----
-
-## 🗺️ Roadmap
-
-TaskNest is actively evolving. Areas planned for continued development:
-
-- [ ] 🧭 More flexible workspace navigation and hierarchy
-- [ ] ⚙️ Workflow automation and task auto-progression
-- [ ] 🚀 Further task organization and productivity improvements
-- [ ] 🏎️ Continued desktop usability and performance refinement
-- [ ] 📱 Android support
-- [ ] 🗃️ Additional data-management capabilities
-
-*The roadmap is subject to change as development progresses.*
+Track progress and vote on ideas in [Issues](https://github.com/arnabsaha7/tasknest/issues). The roadmap may change as development continues.
+<!-- TODO: confirm the "Shipped" list matches what the app actually does today. -->
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Contributions, ideas, and bug reports are welcome!
+Contributions, ideas, and bug reports are welcome.
 
-1. 🍴 Fork the repository
-2. 🌿 Create a feature branch
-3. 🛠️ Make your changes
-4. 🧪 Test the affected functionality
-5. 📬 Open a pull request with a clear explanation of the changes
+1. Fork the repository and create a feature branch.
+2. Make your changes and test the affected functionality (`npm run lint` at minimum).
+3. Open a pull request with a clear explanation of what changed and why.
 
-For larger changes, please open an issue first so the proposed approach can be discussed.
+For larger changes, please open an issue first so the approach can be discussed.
 
-### 🐛 Bug reports
-
-Please include:
-
-- A concise description of the issue
-- Steps to reproduce it
-- Expected and actual behavior
-- Operating system and TaskNest version
-- Relevant screenshots or logs, if available
+**Bug reports** should include a short description, steps to reproduce, expected versus actual behavior, your Windows version and TaskNest version, and screenshots or logs if available.
 
 ---
 
-## 📄 License
+## License
 
-No open-source license has been specified yet.
-
-Until a license is added to this repository, **all rights remain reserved** by the copyright holder. Do not assume that the source code may be redistributed, modified, or used commercially.
+No open-source license has been specified yet, so all rights are reserved by the copyright holder. Until a license is added, the code may not be redistributed, modified, or used commercially.
+<!-- TODO: pick a license (MIT or Apache-2.0 are common). Without one, outside contributions are legally murky, which conflicts with the Contributing section above. -->
 
 ---
 
-## 👤 Author
+## Author
 
-**Arnab Saha** — creator and developer of TaskNest.
-
-[![GitHub](https://img.shields.io/badge/GitHub-arnabsaha7-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/arnabsaha7)
-
-<br />
+**Arnab Saha**, creator and developer of TaskNest · [@arnabsaha7](https://github.com/arnabsaha7)
 
 <div align="center">
 
+<br />
+
 **TaskNest** · *Organize your work. Structure your goals. Stay focused.*
 
-[⭐ Star on GitHub](https://github.com/arnabsaha7/tasknest) &nbsp;•&nbsp; [🐛 Report a Bug](https://github.com/arnabsaha7/tasknest/issues) &nbsp;•&nbsp; [💡 Request a Feature](https://github.com/arnabsaha7/tasknest/issues)
+[Star on GitHub](https://github.com/arnabsaha7/tasknest) &nbsp;·&nbsp; [Report a bug](https://github.com/arnabsaha7/tasknest/issues) &nbsp;·&nbsp; [Request a feature](https://github.com/arnabsaha7/tasknest/issues)
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=100&section=footer" alt="" width="100%" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=1F7A6D&height=90&section=footer" alt="" width="100%" />
 
 </div>
