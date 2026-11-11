@@ -64,7 +64,7 @@ export default function Settings({
   }
 
   const reset = () => {
-    if (!window.confirm('Reset all TaskNest preferences to their default values?')) return
+    if (!window.confirm('Reset all DewTask preferences to their default values?')) return
 
     resetSettings()
     showNotice('Preferences restored to defaults.')

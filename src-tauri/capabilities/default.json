@@ -1,6 +1,6 @@
 {
   "identifier": "default",
-  "description": "Default permissions for the TaskNest main window",
+  "description": "Default permissions for the DewTask main window",
   "windows": [
     "main"
   ],

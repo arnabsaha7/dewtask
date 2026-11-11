@@ -128,7 +128,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
   useEffect(() => {
     if (!isTauri()) return
     void getVersion().then(setAppVersion).catch((error) => {
-      console.error('Could not read TaskNest version:', error)
+      console.error('Could not read DewTask version:', error)
     })
   }, [])
 
@@ -174,7 +174,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
     try {
       const stored = await readAllStorage()
       const backup: Record<string, unknown> = {
-        application: 'TaskNest',
+        application: 'DewTask',
         backupVersion: 1,
         exportedAt: new Date().toISOString(),
         tasknest_tasks: stored.tasknest_tasks ?? [],
@@ -188,14 +188,14 @@ export default function SettingsSections({ section, settings, updateSetting, onN
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `tasknest-backup-${new Date().toISOString().slice(0, 10)}.json`
+      link.download = `dewtask-backup-${new Date().toISOString().slice(0, 10)}.json`
       document.body.appendChild(link)
       link.click()
       link.remove()
       URL.revokeObjectURL(url)
-      onNotice('Your TaskNest backup has been exported.')
+      onNotice('Your DewTask backup has been exported.')
     } catch (error) {
-      console.error('Failed to export TaskNest data:', error)
+      console.error('Failed to export DewTask data:', error)
       onNotice('Could not export your data. Please try again.')
     }
   }
@@ -216,7 +216,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
       const backup = parsed as Record<string, unknown>
 
-      if (backup.application !== 'TaskNest') throw new Error('This backup does not appear to be from TaskNest.')
+      if (!(backup.application === 'DewTask' || backup.application === 'TaskNest')) throw new Error('This backup does not appear to be from DewTask or an earlier TaskNest version.')
 
       if (!DATA_KEYS.every((key) => Array.isArray(backup[key]))) {
 
@@ -232,7 +232,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
       }
 
-      if (!window.confirm('Restore this backup? Your current TaskNest data and preferences will be replaced.')) return
+      if (!window.confirm('Restore this backup? Your current DewTask data and preferences will be replaced.')) return
 
       const restoredSettings = { ...DEFAULT_SETTINGS, ...(rawSettings as Partial<TaskNestSettings>) }
 
@@ -245,7 +245,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
         tasknest_notifications: Array.isArray(backup.tasknest_notifications) ? backup.tasknest_notifications : [],
       })
 
-      onNotice('Backup restored. Reloading TaskNest...')
+      onNotice('Backup restored. Reloading DewTask...')
 
       window.setTimeout(() => window.location.reload(), 700)
 
@@ -263,10 +263,10 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
   const clearData = async () => {
 
-    if (!window.confirm('Permanently delete all TaskNest tasks, categories, tags, workspaces, notifications and preferences from this device? This cannot be undone.')) return
+    if (!window.confirm('Permanently delete all DewTask tasks, categories, tags, workspaces, notifications and preferences from this device? This cannot be undone.')) return
 
     void clearStorage().then(() => window.location.reload()).catch((error) => {
-      console.error('Failed to clear TaskNest data:', error)
+      console.error('Failed to clear DewTask data:', error)
       onNotice('Could not clear local data. Please try again.')
     })
 
@@ -278,7 +278,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
       <section>
 
-        <Heading title="Theme" description="Choose the look and feel of TaskNest. Your selection is saved on this device." />
+        <Heading title="Theme" description="Choose the look and feel of DewTask. Your selection is saved on this device." />
 
         <Card>
 
@@ -325,9 +325,9 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
               {settings.themeId === SYSTEM_THEME_ID
 
-                ? 'TaskNest automatically switches between light and dark based on your operating system.'
+                ? 'DewTask automatically switches between light and dark based on your operating system.'
 
-                : `${themes.find((theme) => theme.id === settings.themeId)?.description ?? 'Selected theme.'} Theme changes apply across TaskNest.`}
+                : `${themes.find((theme) => theme.id === settings.themeId)?.description ?? 'Selected theme.'} Theme changes apply across DewTask.`}
 
             </p>
 
@@ -343,7 +343,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
   if (section === 'general') return (
 
-    <section><Heading title="Regional preferences" description="Set the date and calendar conventions used throughout TaskNest." /><Card>
+    <section><Heading title="Regional preferences" description="Set the date and calendar conventions used throughout DewTask." /><Card>
 
       <Row title="Date format" description="Choose how dates should be displayed.">
 
@@ -406,7 +406,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
   if (section === 'notifications') return (
     <div className="space-y-6">
       <section>
-        <Heading title="Reminder preferences" description="Choose which task alerts TaskNest should create." />
+        <Heading title="Reminder preferences" description="Choose which task alerts DewTask should create." />
         <Card>
           <Row title="Enable reminders" description="Master switch for individual reminders and automatic deadline alerts.">
             <div className="flex justify-start sm:justify-end"><Toggle checked={settings.remindersEnabled} label="Enable reminders" onChange={(value) => updateSetting('remindersEnabled', value)} /></div>
@@ -423,7 +423,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
         </Card>
       </section>
       <section>
-        <Heading title="System notifications" description="Allow TaskNest to show system notifications on this device." />
+        <Heading title="System notifications" description="Allow DewTask to show system notifications on this device." />
         <Card>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -442,8 +442,8 @@ export default function SettingsSections({ section, settings, updateSetting, onN
                   setNotificationPermission(permission)
                   if (permission === 'granted') {
                     sendTauriNotification({
-                      title: 'TaskNest notifications enabled',
-                      body: 'TaskNest can now notify you about task reminders and deadlines.',
+                      title: 'DewTask notifications enabled',
+                      body: 'DewTask can now notify you about task reminders and deadlines.',
                     })
                     window.dispatchEvent(new Event('focus'))
                   }
@@ -464,7 +464,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
       <div className="flex items-start gap-3 rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] p-4">
         <Bell size={17} className="mt-0.5 shrink-0 text-[var(--tn-primary)]" />
         <p className="text-xs leading-5 text-[var(--tn-text-muted)]">
-          Set reminders for individual tasks. Notifications work even when TaskNest is closed on Android and iOS; on Windows and web, TaskNest must be running.
+          Set reminders for individual tasks. Notifications work even when DewTask is closed on Android and iOS; on Windows and web, DewTask must be running.
         </p>      
       </div>
     </div>
@@ -482,7 +482,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
         <section>
           <Heading
             title="Backup and restore"
-            description="Keep a portable copy of your TaskNest workspace or restore it from a backup."
+            description="Keep a portable copy of your DewTask workspace or restore it from a backup."
           />
           <Card>
             <div className="flex flex-col gap-4">
@@ -492,7 +492,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold leading-5 text-[var(--tn-text)]">
-                    Your TaskNest backup
+                    Your DewTask backup
                   </p>
                   <p className="mt-1 text-xs leading-5 text-[var(--tn-text-subtle)]">
                     Export your tasks, workspaces and preferences, or restore them from a backup file.
@@ -539,12 +539,12 @@ export default function SettingsSections({ section, settings, updateSetting, onN
           </Card>
         </section>
 
-        <section><Heading title="Your local data" description="See what information TaskNest saves on this device." /><Card>
+        <section><Heading title="Your local data" description="See what information DewTask saves on this device." /><Card>
           <div className="mb-5 flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400"><ShieldCheck size={19} /></div>
             <div>
               <p className="text-sm font-medium text-[var(--tn-text)]">Your information stays on this device</p>
-              <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--tn-text-subtle)]">TaskNest saves your information in this browser. It is not automatically synced to a cloud account, so remember to export a backup if you want to move your data to another device.</p>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--tn-text-subtle)]">DewTask saves your information in this browser. It is not automatically synced to a cloud account, so remember to export a backup if you want to move your data to another device.</p>
             </div>
           </div>
           <div className="overflow-hidden rounded-lg border border-[var(--tn-border)]">
@@ -577,7 +577,7 @@ export default function SettingsSections({ section, settings, updateSetting, onN
             })}
           </div>
         </Card></section>
-        <section><Heading title="Danger zone" description="Actions here permanently affect data stored in this browser." /><div className="rounded-xl border border-red-500/25 bg-red-500/[0.04] p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div className="flex items-start gap-3"><AlertTriangle size={19} className="mt-0.5 shrink-0 text-red-400" /><div><h4 className="text-sm font-semibold text-red-300">Clear all local data</h4><p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--tn-text-muted)]">Permanently delete all TaskNest tasks, categories, tags, workspaces and preferences from this device. This cannot be undone.</p></div></div><button type="button" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-red-500/30 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/10" onClick={clearData}><Trash2 size={16} />Clear local data</button></div></div></section>
+        <section><Heading title="Danger zone" description="Actions here permanently affect data stored in this browser." /><div className="rounded-xl border border-red-500/25 bg-red-500/[0.04] p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div className="flex items-start gap-3"><AlertTriangle size={19} className="mt-0.5 shrink-0 text-red-400" /><div><h4 className="text-sm font-semibold text-red-300">Clear all local data</h4><p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--tn-text-muted)]">Permanently delete all DewTask tasks, categories, tags, workspaces and preferences from this device. This cannot be undone.</p></div></div><button type="button" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-red-500/30 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/10" onClick={clearData}><Trash2 size={16} />Clear local data</button></div></div></section>
 
       </div>
 
@@ -587,10 +587,10 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
   return (
 
-    <section><Heading title="About TaskNest" description="Application details and project credits." /><Card>
-      <div className="flex items-center gap-4 border-b border-[var(--tn-border)] pb-5"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--tn-primary)]/15 text-[var(--tn-primary)]"><SettingsIcon size={25} /></div><div><h3 className="text-base font-semibold text-[var(--tn-text)]">TaskNest</h3><p className="mt-1 text-xs text-[var(--tn-text-subtle)]">Personal task management</p></div></div>
+    <section><Heading title="About DewTask" description="Application details and project credits." /><Card>
+      <div className="flex items-center gap-4 border-b border-[var(--tn-border)] pb-5"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--tn-primary)]/15 text-[var(--tn-primary)]"><SettingsIcon size={25} /></div><div><h3 className="text-base font-semibold text-[var(--tn-text)]">DewTask</h3><p className="mt-1 text-xs text-[var(--tn-text-subtle)]">Personal task management</p></div></div>
       <div className="divide-y divide-[var(--tn-border)]">
-        <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Application</span><span className="text-[var(--tn-text)]">TaskNest</span></div>
+        <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Application</span><span className="text-[var(--tn-text)]">DewTask</span></div>
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Version</span><span className="text-[var(--tn-text)]">{appVersion}</span></div>
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Storage</span><span className="text-right text-[var(--tn-text)]">Local storage</span></div>
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Operating mode</span><span className="text-[var(--tn-text)]">Offline-first</span></div>
@@ -604,10 +604,10 @@ export default function SettingsSections({ section, settings, updateSetting, onN
               <p className="mt-1 text-xs leading-5 text-[var(--tn-text-muted)]">
                 {updater.status === 'checking' && 'Checking GitHub for a newer version…'}
                 {updater.status === 'idle' && 'Update status has not been checked yet.'}
-                {updater.status === 'up-to-date' && 'You are using the latest version of TaskNest.'}
+                {updater.status === 'up-to-date' && 'You are using the latest version of DewTask.'}
                 {updater.status === 'available' && `Version ${updater.availableVersion} is available.`}
                 {updater.status === 'downloading' && (updater.progress === null ? 'Downloading the update…' : `Downloading update… ${updater.progress}%`)}
-                {updater.status === 'installing' && 'The installer is starting. TaskNest will close to complete the update.'}
+                {updater.status === 'installing' && 'The installer is starting. DewTask will close to complete the update.'}
                 {updater.status === 'error' && 'The update check or installation could not be completed.'}
                 {updater.status === 'unsupported' && 'In-app updates are available in the Windows desktop app.'}
               </p>

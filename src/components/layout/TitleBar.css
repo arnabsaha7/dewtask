@@ -111,8 +111,8 @@
 .tn-titlebar-brand-lockup {
   display: block;
   width: 100%;
-  max-width: 158px;
-  height: 30px;
+  max-width: 220px;
+  height: 40px;
   min-width: 0;
   flex: 1 1 auto;
   object-fit: contain;
@@ -554,7 +554,7 @@
   position: absolute;
   z-index: 2;
   inset: 0 auto 0 0;
-  width: 240px;
+  width: 220px;
   height: 43px;
 }
 
@@ -566,7 +566,7 @@
   grid-column: 1;
   grid-row: 1;
   min-width: 0;
-  padding-left: 258px;
+  padding-left: 238px;
   padding-right: 14px;
   justify-self: stretch;
 }
@@ -1045,4 +1045,90 @@
   transform: translate(-50%, -50%) scale(1) !important;
   background: var(--tn-surface-hover) !important;
   color: var(--tn-text) !important;
+}
+
+
+
+/* Final DewTask brand sizing and monochrome compact mark. */
+.tn-window-brand-slot:not(.is-collapsed) {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  padding-left: 20px !important;
+  padding-right: 10px !important;
+  overflow: hidden !important;
+}
+
+.tn-titlebar-brand-lockup {
+  width: 100% !important;
+  max-width: 250px !important;
+  height: 40px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+.tn-window-titlebar:not(:has(.tn-window-brand-slot.is-collapsed)) .tn-titlebar-meta {
+  padding-left: 238px !important;
+}
+
+.tn-window-brand-slot.is-collapsed .tn-titlebar-brand-mark {
+  display: block;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+  background-color: var(--tn-text);
+  -webkit-mask-image: url('../../assets/brand/dewtask-icon-mono-mask.svg');
+  mask-image: url('../../assets/brand/dewtask-icon-mono-mask.svg');
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  filter: none !important;
+}
+
+.tn-window-brand-slot.is-collapsed .tn-titlebar-sidebar-toggle {
+  color: var(--tn-text-muted) !important;
+}
+
+@media (max-width: 1100px) {
+  .tn-window-brand-slot:not(.is-collapsed) {
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+  }
+
+  .tn-window-titlebar:not(:has(.tn-window-brand-slot.is-collapsed)) .tn-titlebar-meta {
+    padding-left: 238px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .tn-window-brand-slot:not(.is-collapsed) {
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+  }
+
+  .tn-window-titlebar:not(:has(.tn-window-brand-slot.is-collapsed)) .tn-titlebar-meta {
+    padding-left: 238px !important;
+  }
+}
+
+
+/* DewTask final brand alignment:
+   nudge the expanded lockup inward from the sidebar edge and tint the
+   collapsed monochrome mask with the same primary accent used by actions. */
+.tn-window-titlebar .tn-window-brand-slot:not(.is-collapsed) .tn-titlebar-brand-lockup {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 200px !important;
+  object-position: left center !important;
+}
+
+.tn-window-titlebar .tn-window-brand-slot.is-collapsed .tn-titlebar-brand-mark {
+  background-color: var(--tn-primary) !important;
+  color: var(--tn-primary) !important;
+  filter: none !important;
 }

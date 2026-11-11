@@ -654,7 +654,7 @@ function App() {
         {updater.updateAvailable && !updateBannerDismissed && (
           <div className="mx-5 mt-4 flex flex-col gap-3 rounded-xl border border-[var(--tn-primary)]/30 bg-[var(--tn-primary)]/8 p-4 sm:mx-7 sm:flex-row sm:items-center sm:justify-between lg:mx-9">
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-[var(--tn-text)]">A TaskNest update is available</p>
+              <p className="text-sm font-semibold text-[var(--tn-text)]">A DewTask update is available</p>
               <p className="mt-1 text-xs text-[var(--tn-text-muted)]">Version {updater.availableVersion} is ready to install.</p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">

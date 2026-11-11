@@ -1,5 +1,5 @@
 
-name: Publish TaskNest release
+name: Publish DewTask release
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 # Prevent two releases from publishing simultaneously.
 concurrency:
-  group: tasknest-release-${{ github.ref }}
+  group: dewtask-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -58,7 +58,7 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
 
-      - name: Build, sign, and publish TaskNest
+      - name: Build, sign, and publish DewTask
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,13 +69,13 @@ jobs:
 
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: TaskNest ${{ github.ref_name }}
+          releaseName: DewTask ${{ github.ref_name }}
 
           releaseBody: |
-            TaskNest desktop release ${{ github.ref_name }}.
+            DewTask desktop release ${{ github.ref_name }}.
 
             Download the Windows installer from the assets below.
-            Existing TaskNest desktop installations can install this update
+            Existing TaskNest desktop installations can install this DewTask transition update
             directly from within the application.
 
           releaseDraft: false

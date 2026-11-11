@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <!-- Pure #000000 compound paths, 100% opaque, zero strokes/filters/gradients for CSS mask-image / Safari pinned tabs -->
+  <g transform="translate(-21, -15)" fill="#000000">
+    <!-- Left Crescent Silhouette (separated by clean 3.5px negative-space channel) -->
+    <path d="M 61.5 70 C 49 89.5, 45 106, 48 124 C 51 141.5, 63.5 156, 77 163.5 C 80 154.5, 85 146, 91 139.5 C 68.5 127.5, 57.5 108.5, 57.5 87 C 57.5 81, 59 75, 61.5 70 Z" />
+
+    <!-- Main Drop Silhouette with Compound Checkmark Cutout -->
+    <path fill-rule="evenodd" d="M 97 22 C 99 19.5, 101 19.5, 103 22 C 118 40, 152 77, 152 108 C 152 109.5, 151.8 111, 151.5 112 C 132.5 116, 107.5 123, 93.5 137 C 67 121, 60.5 96, 66.5 65 C 75.5 50, 87 34, 97 22 Z M 81.6 95.6 A 4.75 4.75 0 0 0 81.6 102.4 L 93.1 113.9 A 4.75 4.75 0 0 0 99.9 113.9 L 124.9 88.9 A 4.75 4.75 0 0 0 118.1 82.1 L 96.5 103.7 L 88.4 95.6 A 4.75 4.75 0 0 0 81.6 95.6 Z" />
+
+    <!-- Bottom Leaf Silhouette (separated by clean negative-space channel) -->
+    <path d="M 85 165 C 96 138, 120 123, 154 117 C 152 146, 132 169, 103 169 C 96 169, 90 167.5, 85 165 Z" />
+  </g>
+</svg>

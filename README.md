@@ -1,16 +1,14 @@
-<div align="center">
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=1F7A6D&height=200&section=header&text=TaskNest&fontSize=64&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=Organize%20your%20work.%20Structure%20your%20goals.%20Stay%20focused.&descAlignY=62&descSize=17" alt="TaskNest banner" width="100%" />
-
-<br />
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=1F7A6D&height=200&section=header&text=DewTask&fontSize=64&fontColor=ffffff&animation=fadeIn&fontAlignY=40&desc=Organize%20your%20work.%20Structure%20your%20goals.%20Stay%20focused.&descAlignY=62&descSize=17" alt="DewTask banner" width="100%" />
+</p>
 
 **A fast, offline-first task manager for people who think in projects, not just to-do lists.**
 Workspaces, nested categories, and a clean List/Kanban workflow, with all your data stored on your own device.
 
 <br />
 
-[![Latest release](https://img.shields.io/github/v/release/arnabsaha7/tasknest?style=flat-square&color=1F7A6D&label=release)](https://github.com/arnabsaha7/tasknest/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/arnabsaha7/tasknest/total?style=flat-square&color=3FB5A3&label=downloads)](https://github.com/arnabsaha7/tasknest/releases)
+[![Latest release](https://img.shields.io/github/v/release/arnabsaha7/dewtask?style=flat-square&color=1F7A6D&label=release)](https://github.com/arnabsaha7/dewtask/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/arnabsaha7/dewtask/total?style=flat-square&color=3FB5A3&label=downloads)](https://github.com/arnabsaha7/dewtask/releases)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square&logo=windows&logoColor=white)
 ![Offline-first](https://img.shields.io/badge/offline--first-yes-2ea44f?style=flat-square)
 ![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202%20%2B%20React-F2A33A?style=flat-square)
@@ -35,21 +33,21 @@ Workspaces, nested categories, and a clean List/Kanban workflow, with all your d
 <table align="center">
   <tr>
     <td align="center" width="50%">
-      <img src="docs/screenshots/overview.png" alt="TaskNest dashboard showing work at a glance" width="100%" />
+      <img src="docs/screenshots/overview.png" alt="DewTask dashboard showing work at a glance" width="100%" />
       <br /><sub><b>Dashboard</b> · your work at a glance</sub>
     </td>
     <td align="center" width="50%">
-      <img src="docs/screenshots/workspace.png" alt="TaskNest workspace screen with categories and subcategories" width="100%" />
+      <img src="docs/screenshots/workspace.png" alt="DewTask workspace screen with categories and subcategories" width="100%" />
       <br /><sub><b>Workspaces</b> · categories and subcategories</sub>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="docs/screenshots/calendar.png" alt="TaskNest calendar screen" width="100%" />
+      <img src="docs/screenshots/calendar.png" alt="DewTask calendar screen" width="100%" />
       <br /><sub><b>Calendar</b> · plan and track your schedule</sub>
     </td>
     <td align="center" width="50%">
-      <img src="docs/screenshots/settings.png" alt="TaskNest settings screen with themes and preferences" width="100%" />
+      <img src="docs/screenshots/settings.png" alt="DewTask settings screen with themes and preferences" width="100%" />
       <br /><sub><b>Settings</b> · themes, preferences, backups</sub>
     </td>
   </tr>
@@ -59,9 +57,9 @@ Workspaces, nested categories, and a clean List/Kanban workflow, with all your d
 
 ---
 
-## Why TaskNest
+## Why DewTask
 
-Most to-do apps are either a flat list or a heavyweight project tool with an account and a subscription. TaskNest sits in between:
+Most to-do apps are either a flat list or a heavyweight project tool with an account and a subscription. DewTask sits in between:
 
 - **Structure without overhead.** Separate workspaces for each project or area of life, with categories and subcategories nested as deep as you need.
 - **Your data stays yours.** No account, no cloud, no internet requirement. Everything lives in a local SQLite database on your machine.
@@ -88,18 +86,18 @@ Most to-do apps are either a flat list or a heavyweight project tool with an acc
 
 ## Download and install
 
-The quickest way to use TaskNest is the Windows installer. No build tools required.
+The quickest way to use DewTask is the Windows installer. No build tools required.
 
 <p align="center">
-  <a href="https://github.com/arnabsaha7/tasknest/releases/latest">
-    <img src="https://img.shields.io/badge/Download_latest_installer-Windows-1F7A6D?style=for-the-badge&logo=windows&logoColor=white" alt="Download the latest TaskNest installer" />
+  <a href="https://github.com/arnabsaha7/dewtask/releases/latest">
+    <img src="https://img.shields.io/badge/Download_latest_installer-Windows-1F7A6D?style=for-the-badge&logo=windows&logoColor=white" alt="Download the latest DewTask installer" />
   </a>
 </p>
 
-1. Open the [Releases page](https://github.com/arnabsaha7/tasknest/releases/latest).
+1. Open the [Releases page](https://github.com/arnabsaha7/dewtask/releases/latest).
 2. Under **Assets**, download the latest `*-setup.exe`.
 3. Run the installer and follow the prompts.
-4. Launch **TaskNest** from the Start menu.
+4. Launch **DewTask** from the Start menu.
 
 > **Upgrading?** Export a backup first from **Settings → Data & Storage**, then install the newer version.
 
@@ -113,17 +111,17 @@ The quickest way to use TaskNest is the Windows installer. No build tools requir
 
 ## Data, backups, and privacy
 
-TaskNest is built around local data ownership.
+DewTask is built around local data ownership.
 
 - The desktop app stores its data in a local SQLite database on your device.
 - Core features work fully offline.
 - There is no automatic cloud sync.
-<!-- TODO: if true, add "TaskNest sends no telemetry and makes no network requests." This is a strong trust signal for an offline-first app. -->
+<!-- TODO: if true, add "DewTask sends no telemetry and makes no network requests." This is a strong trust signal for an offline-first app. -->
 <!-- TODO: document where the database file lives on Windows, so users can find it. -->
 
 **Backups.** Open **Settings → Data & Storage** to export or import. An export is a single portable JSON file containing tasks, categories, tags, workspaces, and preferences. Importing **replaces** your current data after you confirm.
 
-> Keep exported backups somewhere other than the machine running TaskNest. A backup on the same disk will not help if the disk fails.
+> Keep exported backups somewhere other than the machine running DewTask. A backup on the same disk will not help if the disk fails.
 
 ---
 
@@ -167,7 +165,7 @@ flowchart LR
 
 ## Build from source
 
-This section is for developers who want to run or build TaskNest themselves.
+This section is for developers who want to run or build DewTask themselves.
 
 ### Prerequisites
 
@@ -180,8 +178,8 @@ This section is for developers who want to run or build TaskNest themselves.
 ### Run
 
 ```bash
-git clone https://github.com/arnabsaha7/tasknest.git
-cd tasknest
+git clone https://github.com/arnabsaha7/dewtask.git
+cd dewtask
 npm install
 ```
 
@@ -220,7 +218,7 @@ The NSIS installer is written to `src-tauri/target/release/bundle/nsis/` as a `*
 <br />
 
 ```text
-tasknest/
+dewtask/
 ├── public/                  # Static assets
 ├── docs/
 │   └── screenshots/         # README screenshots
@@ -271,7 +269,7 @@ Planned:
 - [ ] Android support
 - [ ] Additional data-management capabilities
 
-Track progress and vote on ideas in [Issues](https://github.com/arnabsaha7/tasknest/issues). The roadmap may change as development continues.
+Track progress and vote on ideas in [Issues](https://github.com/arnabsaha7/dewtask/issues). The roadmap may change as development continues.
 <!-- TODO: confirm the "Shipped" list matches what the app actually does today. -->
 
 ---
@@ -286,7 +284,7 @@ Contributions, ideas, and bug reports are welcome.
 
 For larger changes, please open an issue first so the approach can be discussed.
 
-**Bug reports** should include a short description, steps to reproduce, expected versus actual behavior, your Windows version and TaskNest version, and screenshots or logs if available.
+**Bug reports** should include a short description, steps to reproduce, expected versus actual behavior, your Windows version and DewTask version, and screenshots or logs if available.
 
 ---
 
@@ -299,15 +297,15 @@ No open-source license has been specified yet, so all rights are reserved by the
 
 ## Author
 
-**Arnab Saha**, creator and developer of TaskNest · [@arnabsaha7](https://github.com/arnabsaha7)
+**Arnab Saha**, creator and developer of DewTask · [@arnabsaha7](https://github.com/arnabsaha7)
 
 <div align="center">
 
 <br />
 
-**TaskNest** · *Organize your work. Structure your goals. Stay focused.*
+**DewTask** · *Organize your work. Structure your goals. Stay focused.*
 
-[Star on GitHub](https://github.com/arnabsaha7/tasknest) &nbsp;·&nbsp; [Report a bug](https://github.com/arnabsaha7/tasknest/issues) &nbsp;·&nbsp; [Request a feature](https://github.com/arnabsaha7/tasknest/issues)
+[Star on GitHub](https://github.com/arnabsaha7/dewtask) &nbsp;·&nbsp; [Report a bug](https://github.com/arnabsaha7/dewtask/issues) &nbsp;·&nbsp; [Request a feature](https://github.com/arnabsaha7/dewtask/issues)
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=1F7A6D&height=90&section=footer" alt="" width="100%" />
 

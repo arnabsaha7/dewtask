@@ -427,10 +427,10 @@ export default function Sidebar({
     }
   }, [])
 
-  const accountLabel = accountDisplayName || 'TaskNest account'
+  const accountLabel = accountDisplayName || 'DewTask account'
   const accountInitials = accountDisplayName
     ? accountDisplayName.trim().split(/\\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
-    : 'TN'
+    : 'DT'
 
   useEffect(() => {
     if (!accountMenuOpen) return
@@ -474,7 +474,7 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className={`relative z-20 flex h-full min-h-0 shrink-0 flex-col bg-[var(--tn-surface-muted)] transition-[width] duration-200 ease-in-out ${collapsed ? 'w-[72px]' : 'w-[240px]'}`} aria-label="Sidebar navigation">
+      <aside className={`relative z-20 flex h-full min-h-0 shrink-0 flex-col bg-[var(--tn-surface-muted)] transition-[width] duration-200 ease-in-out ${collapsed ? 'w-[72px]' : 'w-[220px]'}`} aria-label="Sidebar navigation">
         {/* Scrollable area */}
         <div className={`app-scrollbar tn-sidebar-scroll-area min-h-0 flex-1 overflow-y-auto overscroll-y-contain py-4 ${collapsed ? 'is-collapsed px-2' : 'px-3'}`}>
           {/* Primary navigation */}
@@ -767,7 +767,7 @@ export default function Sidebar({
               setAccountActionError(null)
               setAccountMenuOpen((open) => !open)
             }}
-            title={collapsed ? 'TaskNest account' : undefined}
+            title={collapsed ? 'DewTask account' : undefined}
             className={`flex w-full items-center rounded-lg text-left transition hover:bg-[var(--tn-surface-hover)] ${
               collapsed ? 'mx-auto h-10 w-10 justify-center p-0' : 'gap-3 p-2'
             } ${focusRing}`}

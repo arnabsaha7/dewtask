@@ -100,6 +100,7 @@ coverage/
 .nyc_output/
 playwright-report/
 test-results/
+old_assets/
 
 # ==========================================
 # Temporary files

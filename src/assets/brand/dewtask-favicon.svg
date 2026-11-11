@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Simplified micro-geometry: maximized canvas fill, widened separation gap, and boldened checkmark for 16x16 pixel grid clarity -->
+  <defs>
+    <linearGradient id="favDrop" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#35C2FF" />
+      <stop offset="100%" stop-color="#054AB8" />
+    </linearGradient>
+    <linearGradient id="favTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22E4AC" />
+      <stop offset="100%" stop-color="#0A8E7A" />
+    </linearGradient>
+    <linearGradient id="favGreen" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0D9F56" />
+      <stop offset="100%" stop-color="#3AE879" />
+    </linearGradient>
+  </defs>
+
+  <!-- Left Teal Crescent -->
+  <path d="M 8.5 11 C 5.5 15.2, 4.5 19, 5.2 22.8 C 5.8 26.2, 8.2 29, 11 30.4 C 11.7 28.5, 12.8 26.8, 14.2 25.4 C 9.8 23.2, 7.6 19.5, 7.6 15.2 C 7.6 13.7, 7.9 12.3, 8.5 11 Z" fill="url(#favTeal)" />
+
+  <!-- Main Blue Drop -->
+  <path d="M 15.3 1.8 C 15.7 1.3, 16.3 1.3, 16.7 1.8 C 19.8 5.5, 26.8 13, 26.8 19.2 C 26.8 19.6, 26.7 20, 26.6 20.3 C 23 21.1, 17.5 22.5, 14.5 25.5 C 9 22.3, 7.5 17.2, 8.8 10.8 C 10.6 7.8, 13.2 4.3, 15.3 1.8 Z" fill="url(#favDrop)" />
+
+  <!-- Bottom Right Green Leaf -->
+  <path d="M 13 30.8 C 15.2 25.4, 20.2 22.4, 27.2 21.2 C 26.8 27, 22.8 31.5, 16.8 31.5 C 15.4 31.5, 14.1 31.2, 13 30.8 Z" fill="url(#favGreen)" />
+
+  <!-- High-Contrast Bold Checkmark (2.6px stroke on 32x32 -> >1.3px at 16x16) -->
+  <path d="M 12.8 17.5 L 15.3 20 L 20.8 14.5" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

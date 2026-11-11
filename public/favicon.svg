@@ -1,114 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 300" width="320" height="300" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Simplified micro-geometry: maximized canvas fill, widened separation gap, and boldened checkmark for 16x16 pixel grid clarity -->
   <defs>
-    <linearGradient id="sunGrad" x1="107" y1="55" x2="217" y2="180" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFAE34" />
-      <stop offset="55%" stop-color="#FD9414" />
-      <stop offset="100%" stop-color="#F57600" />
+    <linearGradient id="favDrop" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#35C2FF" />
+      <stop offset="100%" stop-color="#054AB8" />
     </linearGradient>
-
-    <linearGradient id="rayGrad" x1="227" y1="20" x2="287" y2="85" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FF9C1E" />
-      <stop offset="100%" stop-color="#F57A00" />
+    <linearGradient id="favTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22E4AC" />
+      <stop offset="100%" stop-color="#0A8E7A" />
     </linearGradient>
-
-    <linearGradient id="nestLeftUpper" x1="18" y1="132" x2="237" y2="245" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#10B29D" />
-      <stop offset="50%" stop-color="#01867B" />
-      <stop offset="100%" stop-color="#005B5E" />
-    </linearGradient>
-
-    <linearGradient id="nestLeftLower" x1="37" y1="185" x2="260" y2="275" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#016E6A" />
-      <stop offset="55%" stop-color="#005258" />
-      <stop offset="100%" stop-color="#003A40" />
-    </linearGradient>
-
-    <linearGradient id="nestRightGrad" x1="177" y1="205" x2="297" y2="135" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0E9184" />
-      <stop offset="55%" stop-color="#01716C" />
-      <stop offset="100%" stop-color="#005053" />
-    </linearGradient>
-
-    <linearGradient id="nestRightRim" x1="177" y1="196" x2="287" y2="215" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#047D74" />
-      <stop offset="100%" stop-color="#00484B" />
+    <linearGradient id="favGreen" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0D9F56" />
+      <stop offset="100%" stop-color="#3AE879" />
     </linearGradient>
   </defs>
 
-  <g id="tasknest-icon" transform="translate(-8, 0)">
-    <!-- Three Orange Rays -->
-    <g id="rays">
-      <path id="ray-1" d="M 237.5 45.5 L 248.5 23.5" stroke="url(#rayGrad)" stroke-width="11.5" stroke-linecap="round" />
-      <path id="ray-2" d="M 259.5 60.0 L 279.0 41.5" stroke="url(#rayGrad)" stroke-width="11.5" stroke-linecap="round" />
-      <path id="ray-3" d="M 269.5 83.0 L 294.5 76.5" stroke="url(#rayGrad)" stroke-width="11.5" stroke-linecap="round" />
-    </g>
+  <!-- Left Teal Crescent -->
+  <path d="M 8.5 11 C 5.5 15.2, 4.5 19, 5.2 22.8 C 5.8 26.2, 8.2 29, 11 30.4 C 11.7 28.5, 12.8 26.8, 14.2 25.4 C 9.8 23.2, 7.6 19.5, 7.6 15.2 C 7.6 13.7, 7.9 12.3, 8.5 11 Z" fill="url(#favTeal)" />
 
-    <!-- Orange Sun / Circle -->
-    <path id="orange-circle" fill="url(#sunGrad)" d="
-      M 90.2 135.5
-      A 80.0 80.0 0 1 1 249.8 134.0
-      C 226.0 151.5, 198.5 169.5, 168.5 185.8
-      C 141.0 171.0, 114.5 153.5, 90.2 135.5
-      Z
-    " />
+  <!-- Main Blue Drop -->
+  <path d="M 15.3 1.8 C 15.7 1.3, 16.3 1.3, 16.7 1.8 C 19.8 5.5, 26.8 13, 26.8 19.2 C 26.8 19.6, 26.7 20, 26.6 20.3 C 23 21.1, 17.5 22.5, 14.5 25.5 C 9 22.3, 7.5 17.2, 8.8 10.8 C 10.6 7.8, 13.2 4.3, 15.3 1.8 Z" fill="url(#favDrop)" />
 
-    <!-- White Checkmark -->
-    <path id="checkmark" fill="#FFFFFF" d="
-      M 161.8 153.2
-      C 159.5 153.2, 157.3 152.3, 155.6 150.6
-      L 138.2 133.2
-      C 134.8 129.8, 134.8 124.2, 138.2 120.8
-      C 141.6 117.4, 147.2 117.4, 150.6 120.8
-      L 161.8 132.0
-      L 191.4 100.4
-      C 194.7 96.9, 200.3 96.8, 203.8 100.1
-      C 207.3 103.4, 207.4 109.0, 204.1 112.5
-      L 168.2 150.5
-      C 166.5 152.2, 164.2 153.2, 161.8 153.2
-      Z
-    " />
+  <!-- Bottom Right Green Leaf -->
+  <path d="M 13 30.8 C 15.2 25.4, 20.2 22.4, 27.2 21.2 C 26.8 27, 22.8 31.5, 16.8 31.5 C 15.4 31.5, 14.1 31.2, 13 30.8 Z" fill="url(#favGreen)" />
 
-    <!-- Teal Nest -->
-    <g id="teal-nest">
-      <g id="nest-right-leaf">
-        <path id="nest-right-base" fill="url(#nestRightGrad)" d="
-          M 179.5 196.2
-          C 218.0 176.5, 256.5 153.5, 294.5 133.0
-          C 302.5 128.6, 310.2 133.8, 308.8 143.2
-          C 305.8 166.8, 296.2 194.5, 282.5 215.2
-          C 279.8 218.5, 274.5 219.2, 267.5 219.2
-          C 237.5 219.0, 207.0 209.8, 179.5 196.2
-          Z
-        " />
-        <path id="nest-right-shading" fill="url(#nestRightRim)" d="
-          M 179.5 196.2
-          C 206.0 203.5, 238.5 206.5, 287.5 206.0
-          C 285.8 209.5, 284.2 212.6, 282.5 215.2
-          C 279.8 218.5, 274.5 219.2, 267.5 219.2
-          C 237.5 219.0, 207.0 209.8, 179.5 196.2
-          Z
-        " />
-      </g>
-
-      <g id="nest-left-cradle">
-        <path id="nest-left-upper-body" fill="url(#nestLeftUpper)" d="
-          M 26.2 142.5
-          C 25.0 132.8, 33.2 128.2, 41.8 133.2
-          C 86.5 159.2, 134.5 189.2, 184.5 210.8
-          C 214.5 223.8, 244.2 229.0, 274.2 228.5
-          C 252.0 261.8, 212.5 281.0, 167.5 281.0
-          C 93.5 281.0, 34.2 221.5, 26.2 142.5
-          Z
-        " />
-        <path id="nest-left-lower-basin" fill="url(#nestLeftLower)" d="
-          M 34.5 182.0
-          C 58.0 218.5, 102.5 247.5, 158.0 251.2
-          C 198.5 253.8, 239.5 244.5, 274.2 228.5
-          C 252.0 261.8, 212.5 281.0, 167.5 281.0
-          C 103.0 281.0, 49.5 239.5, 34.5 182.0
-          Z
-        " />
-      </g>
-    </g>
-  </g>
+  <!-- High-Contrast Bold Checkmark (2.6px stroke on 32x32 -> >1.3px at 16x16) -->
+  <path d="M 12.8 17.5 L 15.3 20 L 20.8 14.5" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
 </svg>

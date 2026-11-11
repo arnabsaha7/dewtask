@@ -33,7 +33,7 @@ function initials(name?: string | null) {
   const parts = name?.trim().split(/\s+/).filter(Boolean) ?? []
   return parts.length
     ? parts.slice(0, 2).map((part) => part[0]).join('').toUpperCase()
-    : 'TN'
+    : 'DT'
 }
 
 function dateLabel(value?: string | null) {
@@ -473,7 +473,7 @@ export default function Profile({ previewState }: ProfileProps) {
 
         <ProfileSection
           title="Connected Devices"
-          description="Devices registered with this TaskNest account."
+          description="Devices registered with this DewTask account."
           bodyClassName="py-1"
         >
           <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center">
