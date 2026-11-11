@@ -125,18 +125,16 @@ export default function CreateTaskModal({
 }: Props) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [workspaceId, setWorkspaceId] = useState(
-    workspaces[0]?.id ?? '',
-  )
+  const [workspaceId, setWorkspaceId] = useState(workspaces[0]?.id ?? '')
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const workspaceMenuRef = useRef<HTMLDivElement>(null)
   const [categoryId, setCategoryId] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('Medium')
   const [status, setStatus] = useState<TaskStatus>('To Do')
-  const [dueDate, setDueDate] = useState('')
+  const [dueDate, setDueDate] = useState(initialDate ?? '')
   const [reminderAt, setReminderAt] = useState('')
-  const [scheduledStart, setScheduledStart] = useState('')
-  const [scheduledEnd, setScheduledEnd] = useState('')
+  const [scheduledStart, setScheduledStart] = useState(initialScheduledStart ? toLocalInputValue(initialScheduledStart) : '')
+  const [scheduledEnd, setScheduledEnd] = useState(initialScheduledEnd ? toLocalInputValue(initialScheduledEnd) : '')
   const [autoProgressionEnabled, setAutoProgressionEnabled] = useState(false)
   const [clockNow] = useState(() => new Date())
 
@@ -144,6 +142,9 @@ export default function CreateTaskModal({
     () => flattenCategories(categories, workspaceId),
     [categories, workspaceId],
   )
+  const effectiveCategoryId = categoryOptions.some((item) => item.category.id === categoryId)
+    ? categoryId
+    : categoryOptions[0]?.category.id ?? ''
 
   useEffect(() => {
     if (!workspaceMenuOpen) return
@@ -165,28 +166,6 @@ export default function CreateTaskModal({
     }
   }, [workspaceMenuOpen])
 
-  useEffect(() => {
-    if (!categoryOptions.some((item) => item.category.id === categoryId)) {
-      setCategoryId(categoryOptions[0]?.category.id ?? '')
-    }
-  }, [categoryOptions, categoryId])
-
-  useEffect(() => {
-    if (open) {
-      setTitle('')
-      setDescription('')
-      setWorkspaceId(workspaces[0]?.id ?? '')
-      setWorkspaceMenuOpen(false)
-      setPriority('Medium')
-      setStatus('To Do')
-      setDueDate(initialDate ?? '')
-      setReminderAt('')
-      setScheduledStart(initialScheduledStart ? toLocalInputValue(initialScheduledStart) : '')
-      setScheduledEnd(initialScheduledEnd ? toLocalInputValue(initialScheduledEnd) : '')
-      setAutoProgressionEnabled(false)
-    }
-  }, [open, workspaces, initialDate, initialScheduledStart, initialScheduledEnd])
-
   if (!open) return null
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -197,7 +176,7 @@ export default function CreateTaskModal({
     if (
       !trimmedTitle ||
       !workspaceId ||
-      !categoryId ||
+      !effectiveCategoryId ||
       categoryOptions.length === 0
     ) {
       return
@@ -224,7 +203,7 @@ export default function CreateTaskModal({
       title: trimmedTitle,
       description: description.trim(),
       workspaceId,
-      categoryId,
+      categoryId: effectiveCategoryId,
       priority,
       status,
       dueDate: dueDate || null,
@@ -386,7 +365,7 @@ export default function CreateTaskModal({
               <CategoryTreeSelect
                 options={categoryOptions}
                 categories={categories}
-                value={categoryId}
+                value={effectiveCategoryId}
                 onChange={setCategoryId}
                 disabled={categoryOptions.length === 0}
               />
@@ -574,7 +553,7 @@ export default function CreateTaskModal({
               disabled={
                 !title.trim() ||
                 !workspaceId ||
-                !categoryId ||
+                !effectiveCategoryId ||
                 categoryOptions.length === 0 ||
                 (autoProgressionEnabled && (
                   !scheduledStart ||

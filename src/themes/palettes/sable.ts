@@ -29,6 +29,7 @@ const theme: ThemePalette = {
     primary: '#83B5B5',
     primaryHover: '#99C5C3',
     primarySoft: 'rgba(131, 181, 181, 0.15)',
+    primaryText: '#172015',
 
     // Secondary accent: Burnt copper
     accent: '#C78360',

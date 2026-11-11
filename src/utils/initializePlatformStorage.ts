@@ -1,6 +1,7 @@
 import { isTauri } from '@tauri-apps/api/core'
 import { Capacitor } from '@capacitor/core'
 import { configureStorageDriver, initializeStorage } from './storage'
+import { getTaskNestIdentity } from '../services/identity'
 
 /** Select desktop or mobile native SQLite while retaining IndexedDB in browsers. */
 export async function initializePlatformStorage(): Promise<void> {
@@ -13,4 +14,6 @@ export async function initializePlatformStorage(): Promise<void> {
   }
 
   await initializeStorage()
+  // Establish a stable account/device identity before feature hooks are mounted.
+  await getTaskNestIdentity()
 }

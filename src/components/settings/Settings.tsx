@@ -6,6 +6,7 @@ import {
   ListTodo,
   Bell,
   Database,
+  Cloud,
   Info,
   RotateCcw,
 } from 'lucide-react'
@@ -13,7 +14,7 @@ import type { TaskNestSettings } from '../../hooks/useSettings'
 import SettingsSections from './SettingsSections'
 import type { AppUpdaterControls } from '../../hooks/useAppUpdater'
 
-type Section = 'general' | 'appearance' | 'tasks' | 'notifications' | 'data' | 'about'
+type Section = 'general' | 'appearance' | 'tasks' | 'notifications' | 'sync' | 'data' | 'about'
 
 const sections: {
   id: Section
@@ -25,6 +26,7 @@ const sections: {
   { id: 'appearance', label: 'Appearance', description: 'Choose your theme and visual style', icon: Palette },
   { id: 'tasks', label: 'Task preferences', description: 'Choose how tasks are displayed', icon: ListTodo },
   { id: 'notifications', label: 'Notifications', description: 'Reminder preferences', icon: Bell },
+  { id: 'sync', label: 'Sync & account', description: 'Google Drive and connected devices', icon: Cloud },
   { id: 'data', label: 'Data & storage', description: 'Backup, restore and manage your data', icon: Database },
   { id: 'about', label: 'About', description: 'Application information', icon: Info },
 ]

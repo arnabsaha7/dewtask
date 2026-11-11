@@ -32,8 +32,9 @@ import {
 } from '@tauri-apps/plugin-notification'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { clearStorage, readAllStorage, replaceAllStorage, storageRecordExists, type StorageKey } from '../../utils/storage'
+import SyncSettingsSection from './SyncSettingsSection'
 
-type Section = 'general' | 'appearance' | 'tasks' | 'notifications' | 'data' | 'about'
+type Section = 'general' | 'appearance' | 'tasks' | 'notifications' | 'sync' | 'data' | 'about'
 
 type UpdateSetting = <K extends keyof TaskNestSettings>(
 
@@ -468,6 +469,8 @@ export default function SettingsSections({ section, settings, updateSetting, onN
       </div>
     </div>
   )
+
+  if (section === 'sync') return <SyncSettingsSection />
 
   if (section === 'data') {
 

@@ -1,7 +1,7 @@
 import { AlertTriangle, Folders, X } from 'lucide-react'
 
-import { useEffect, useState } from 'react'
-import WorkspaceEditorModal from './WorkspaceEditorModal'
+import { lazy, Suspense, useEffect, useState } from 'react'
+const WorkspaceEditorModal = lazy(() => import('./WorkspaceEditorModal'))
 import type { Category, Task, Workspace } from '../../types'
 import WorkspaceCard from './WorkspaceCard'
 
@@ -131,14 +131,16 @@ export default function WorkspacePage({
       )}
 
       {editingWorkspace && (
-        <WorkspaceEditorModal
-          workspace={editingWorkspace}
-          onClose={() => setEditingWorkspace(null)}
-          onSave={(data) => {
-            onUpdateWorkspace(editingWorkspace.id, data)
-            setEditingWorkspace(null)
-          }}
-        />
+        <Suspense fallback={null}>
+          <WorkspaceEditorModal
+            workspace={editingWorkspace}
+            onClose={() => setEditingWorkspace(null)}
+            onSave={(data) => {
+              onUpdateWorkspace(editingWorkspace.id, data)
+              setEditingWorkspace(null)
+            }}
+          />
+        </Suspense>
       )}
 
       {deletingWorkspace && (() => {

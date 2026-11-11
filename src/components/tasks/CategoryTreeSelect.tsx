@@ -69,20 +69,6 @@ export default function CategoryTreeSelect({
     })
   }
 
-  // When the dropdown opens, make sure the selected item is visible.
-  useEffect(() => {
-    if (!open || !value) return
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      let current = byId.get(value)
-      while (current?.parentId) {
-        next.add(current.parentId)
-        current = byId.get(current.parentId)
-      }
-      return next.size === prev.size ? prev : next
-    })
-  }, [open, value, byId])
-
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
       if (
@@ -105,6 +91,21 @@ export default function CategoryTreeSelect({
       document.removeEventListener('keydown', handleEscape)
     }
   }, [])
+
+  function handleDropdownToggle() {
+    if (!open && value) {
+      setExpanded((previous) => {
+        const next = new Set(previous)
+        let current = byId.get(value)
+        while (current?.parentId) {
+          next.add(current.parentId)
+          current = byId.get(current.parentId)
+        }
+        return next.size === previous.size ? previous : next
+      })
+    }
+    setOpen((previous) => !previous)
+  }
 
   // A row is visible only if every ancestor is expanded.
   function isVisible(category: Category) {
@@ -177,7 +178,7 @@ export default function CategoryTreeSelect({
         disabled={disabled}
         aria-haspopup="tree"
         aria-expanded={open}
-        onClick={() => setOpen((previous) => !previous)}
+        onClick={handleDropdownToggle}
         className="flex w-full items-center justify-between rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-3 py-3 text-left text-xs text-[var(--tn-text)] outline-none transition hover:border-[var(--tn-nav-active-border)] focus-visible:border-[var(--tn-primary)] focus-visible:ring-2 focus-visible:ring-[var(--tn-primary)]/20 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className="flex min-w-0 items-center gap-2 truncate">

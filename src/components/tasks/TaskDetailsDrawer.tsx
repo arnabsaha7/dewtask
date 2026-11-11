@@ -133,25 +133,6 @@ export default function TaskDetailsDrawer({
   )
 
   useEffect(() => {
-    setTitle(task.title)
-    setDescription(task.description ?? '')
-    setPriority(task.priority)
-    setStatus(task.status)
-    setDueDate(task.dueDate ?? '')
-    setReminderAt(toLocalDateTimeInput(task.reminderAt))
-    setAutoProgressionEnabled(task.autoProgressionEnabled ?? false)
-    setAutoStartAt(toLocalDateTimeInput(task.autoProgressionStartAt) || toLocalDateTimeInput(new Date().toISOString()))
-    setAutoEndAt(toLocalDateTimeInput(task.autoProgressionEndAt))
-    setScheduleType('end')
-    setDurationHours('1')
-    setChecklist(task.checklist ?? [])
-    setNewItem('')
-    setWorkspaceId(task.workspaceId)
-    setCategoryId(task.categoryId)
-    setSelectedTagIds(task.tagIds ?? [])
-  }, [task])
-
-  useEffect(() => {
     const interval = window.setInterval(() => setClockNow(Date.now()), 1000)
     return () => window.clearInterval(interval)
   }, [])

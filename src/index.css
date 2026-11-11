@@ -31,6 +31,7 @@
   --tn-primary-strong: #4338ca;
   --tn-primary-hover: #4f46e5;
   --tn-primary-soft: #eef2ff;
+  --tn-primary-text: #ffffff;
   --tn-input: #ffffff;
   --tn-overlay: rgb(15 23 42 / 42%);
   --tn-shadow: 0 18px 50px rgb(15 23 42 / 10%);
@@ -125,6 +126,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .app-subtle { color: var(--tn-text-subtle); }
 .app-primary { color: var(--tn-primary-strong); }
 .app-primary-bg { background: var(--tn-primary); }
+.app-primary-button {
+  background: var(--tn-primary);
+  color: var(--tn-primary-text);
+}
+.app-primary-button:hover { background: var(--tn-primary-hover); }
 .app-primary-soft { background: var(--tn-primary-soft); }
 .app-input { background: var(--tn-input); color: var(--tn-text); border-color: var(--tn-border); }
 .app-overlay { background: var(--tn-overlay); }

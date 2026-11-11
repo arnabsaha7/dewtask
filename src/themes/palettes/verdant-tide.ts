@@ -1,10 +1,10 @@
 import type { ThemePalette } from '../types'
 
 const theme: ThemePalette = {
-  id: 'tidal-ember',
-  name: 'Tidal Ember',
+  id: 'verdant-tide',
+  name: 'Verdant Tide',
   description:
-    'A balanced workspace inspired by ocean depths and warm autumn sunsets, blending calming teal, soft aqua, and rich amber accents.',
+    'A refreshing workspace blending deep ocean teal, soft aquatic neutrals and warm amber accents, inspired by coastal landscapes.',
   mode: 'light',
 
   colors: {
@@ -27,6 +27,7 @@ const theme: ThemePalette = {
     primary: '#287F80',
     primaryHover: '#216B6C',
     primarySoft: 'rgba(40, 127, 128, 0.14)',
+    primaryText: '#FFFFFF',
 
     // Secondary accent: Warm Amber
     accent: '#D68A42',

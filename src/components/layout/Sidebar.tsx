@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
+
+import { getTaskNestIdentity } from '../../services/identity'
 
 import {
   BookOpen,
@@ -34,6 +36,8 @@ import {
   Heart,
   Inbox,
   LayoutDashboard,
+  LogIn,
+  LogOut,
   Layers,
   Leaf,
   Lightbulb,
@@ -68,7 +72,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 
 import CategoryTree from '../CategoryTree'
-import WorkspaceEditorModal from '../workspace/WorkspaceEditorModal'
+const WorkspaceEditorModal = lazy(() => import('../workspace/WorkspaceEditorModal'))
 import type { Category, Workspace } from '../../types'
 import type { CategoryNode } from '../../utils/categories'
 
@@ -89,6 +93,9 @@ interface Props {
   expanded: string[]
   onToggleExpanded: (name: string) => void
   collapsed: boolean
+  /** Google account actions supplied by the application shell. */
+  onSignIn?: () => void | Promise<void>
+  onSignOut?: () => void | Promise<void>
 }
 
 type FormState = { mode: 'edit'; workspace: Workspace } | null
@@ -365,16 +372,65 @@ export default function Sidebar({
   expanded,
   onToggleExpanded,
   collapsed,
+  onSignIn,
+  onSignOut,
 }: Props) {
   const [form, setForm] = useState<FormState>(null)
   const [menu, setMenu] = useState<MenuState | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Workspace | null>(null)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const [accountDisplayName, setAccountDisplayName] = useState('')
+  const [isLocalAccount, setIsLocalAccount] = useState(true)
+  const [accountEmail, setAccountEmail] = useState<string | null>(null)
+  const [signInPending, setSignInPending] = useState(false)
+  const [signOutPending, setSignOutPending] = useState(false)
+  const [accountActionError, setAccountActionError] = useState<string | null>(null)
   const accountMenuRef = useRef<HTMLDivElement>(null)
 
   const closeMenu = useCallback(() => setMenu(null), [])
   const closeForm = useCallback(() => setForm(null), [])
   const cancelDelete = useCallback(() => setPendingDelete(null), [])
+
+  useEffect(() => {
+    let alive = true
+    void getTaskNestIdentity()
+      .then((identity) => {
+        if (alive) {
+          setAccountDisplayName(identity.account.displayName?.trim() ?? '')
+          setIsLocalAccount(identity.account.isLocal)
+          setAccountEmail(identity.account.email ?? null)
+        }
+      })
+      .catch((error) => console.error('Could not load account display name:', error))
+
+    const handleIdentityUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        displayName?: string | null
+        isLocal?: boolean
+        email?: string | null
+      }>
+      if (customEvent.detail?.displayName !== undefined) {
+        setAccountDisplayName(customEvent.detail.displayName?.trim() ?? '')
+      }
+      if (customEvent.detail?.isLocal !== undefined) {
+        setIsLocalAccount(customEvent.detail.isLocal)
+      }
+      if (customEvent.detail?.email !== undefined) {
+        setAccountEmail(customEvent.detail.email ?? null)
+      }
+    }
+
+    window.addEventListener('tasknest:identity-updated', handleIdentityUpdate)
+    return () => {
+      alive = false
+      window.removeEventListener('tasknest:identity-updated', handleIdentityUpdate)
+    }
+  }, [])
+
+  const accountLabel = accountDisplayName || 'TaskNest account'
+  const accountInitials = accountDisplayName
+    ? accountDisplayName.trim().split(/\\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
+    : 'TN'
 
   useEffect(() => {
     if (!accountMenuOpen) return
@@ -595,24 +651,37 @@ export default function Sidebar({
               }`}
             >
               <div className="flex items-center gap-3 border-b border-[var(--tn-border)] px-3 py-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--tn-primary)] text-xs font-semibold text-white">A</div>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--tn-primary)] text-xs font-semibold text-white">{accountInitials}</div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-[var(--tn-text)]">My Workspace</p>
-                  <p className="text-xs text-[var(--tn-text-muted)]">Personal account</p>
+                  <p className="truncate text-sm font-medium text-[var(--tn-text)]">{accountLabel}</p>
+                  <p className="truncate text-xs text-[var(--tn-text-muted)]">
+                    {isLocalAccount ? 'Local account' : accountEmail || 'Google account'}
+                  </p>
                 </div>
               </div>
 
-              <div className="py-1">
-                <div
+              {accountActionError && (
+                <p role="alert" className="px-3 pt-2 text-xs leading-5 text-red-400">
+                  {accountActionError}
+                </p>
+              )}
+              <div className="space-y-1 py-2">
+                <button
+                  type="button"
                   role="menuitem"
-                  aria-disabled="true"
-                  className="flex h-10 cursor-default items-center gap-3 rounded-lg px-3 text-sm text-[var(--tn-text-muted)] opacity-70"
-                  title="Profile is not available yet"
+                  onClick={() => {
+                    setAccountMenuOpen(false)
+                    closeMenu()
+                    onNavigate('Profile')
+                  }}
+                  className={`group flex min-h-11 w-full items-center gap-3 rounded-lg px-2.5 text-left text-[13px] font-medium text-[var(--tn-text)] transition-colors hover:bg-[var(--tn-surface-hover)] ${focusRing}`}
                 >
-                  <User size={17} strokeWidth={1.8} />
-                  <span>Profile</span>
-                  <span className="ml-auto text-[10px]">Coming soon</span>
-                </div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-[var(--tn-surface-muted)] text-[var(--tn-text-muted)] transition duration-150 group-hover:border-[var(--tn-nav-active-border)] group-hover:bg-[var(--tn-nav-active-bg)] group-hover:text-[var(--tn-nav-active-text)] group-focus-visible:border-[var(--tn-nav-active-border)] group-focus-visible:bg-[var(--tn-nav-active-bg)] group-focus-visible:text-[var(--tn-nav-active-text)] group-focus-visible:ring-2 group-focus-visible:ring-[var(--tn-primary)]/35 group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-[var(--tn-surface)]">
+                    <User size={17} strokeWidth={1.8} />
+                  </span>
+                  <span className="min-w-0 flex-1">Profile</span>
+                </button>
+
                 <button
                   type="button"
                   role="menuitem"
@@ -621,11 +690,70 @@ export default function Sidebar({
                     closeMenu()
                     onNavigate('Settings')
                   }}
-                  className="flex h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-[var(--tn-text)] transition hover:bg-[var(--tn-surface-hover)]"
+                  className={`group flex min-h-11 w-full items-center gap-3 rounded-lg px-2.5 text-left text-[13px] font-medium text-[var(--tn-text)] transition-colors hover:bg-[var(--tn-surface-hover)] ${focusRing}`}
                 >
-                  <Settings size={17} strokeWidth={1.8} />
-                  <span>Settings</span>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-[var(--tn-surface-muted)] text-[var(--tn-text-muted)] transition duration-150 group-hover:border-[var(--tn-nav-active-border)] group-hover:bg-[var(--tn-nav-active-bg)] group-hover:text-[var(--tn-nav-active-text)] group-focus-visible:border-[var(--tn-nav-active-border)] group-focus-visible:bg-[var(--tn-nav-active-bg)] group-focus-visible:text-[var(--tn-nav-active-text)] group-focus-visible:ring-2 group-focus-visible:ring-[var(--tn-primary)]/35 group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-[var(--tn-surface)]">
+                    <Settings size={17} strokeWidth={1.8} />
+                  </span>
+                  <span className="min-w-0 flex-1">Settings</span>
                 </button>
+
+                {isLocalAccount ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={!onSignIn || signInPending}
+                    onClick={async () => {
+                      if (!onSignIn) return
+                      setSignInPending(true)
+                      setAccountActionError(null)
+                      try {
+                        await onSignIn()
+                        setAccountMenuOpen(false)
+                      } catch (error) {
+                        const message = error instanceof Error ? error.message : String(error)
+                        setAccountActionError(message)
+                      } finally {
+                        setSignInPending(false)
+                      }
+                    }}
+                    title="Sign in"
+                    className={`group flex min-h-11 w-full items-center gap-3 rounded-lg px-2.5 text-left text-[13px] font-medium text-[var(--tn-text)] transition-colors hover:bg-[var(--tn-surface-hover)] disabled:cursor-wait disabled:opacity-50 ${focusRing}`}
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-[var(--tn-surface-muted)] text-[var(--tn-text-muted)] transition duration-150 group-hover:border-[var(--tn-nav-active-border)] group-hover:bg-[var(--tn-nav-active-bg)] group-hover:text-[var(--tn-nav-active-text)] group-focus-visible:border-[var(--tn-nav-active-border)] group-focus-visible:bg-[var(--tn-nav-active-bg)] group-focus-visible:text-[var(--tn-nav-active-text)] group-focus-visible:ring-2 group-focus-visible:ring-[var(--tn-primary)]/35 group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-[var(--tn-surface)]">
+                      <LogIn size={17} strokeWidth={1.8} />
+                    </span>
+                    <span className="min-w-0 flex-1">{signInPending ? 'Signing in…' : 'Sign in'}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={!onSignOut || signOutPending}
+                    onClick={async () => {
+                      if (!onSignOut) return
+                      setSignOutPending(true)
+                      try {
+                        await onSignOut()
+                        setIsLocalAccount(true)
+                        setAccountEmail(null)
+                        setAccountMenuOpen(false)
+                      } catch (error) {
+                        const message = error instanceof Error ? error.message : String(error)
+                        setAccountActionError(message)
+                      } finally {
+                        setSignOutPending(false)
+                      }
+                    }}
+                    title={!onSignOut ? 'Sign-out will be available when Google authentication is implemented' : 'Sign out'}
+                    className={`group flex min-h-11 w-full items-center gap-3 rounded-lg px-2.5 text-left text-[13px] font-medium text-[var(--tn-text)] transition-colors hover:bg-[var(--tn-surface-hover)] disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-[var(--tn-surface-muted)] text-[var(--tn-text-muted)] transition duration-150 group-hover:border-[var(--tn-nav-active-border)] group-hover:bg-[var(--tn-nav-active-bg)] group-hover:text-[var(--tn-nav-active-text)] group-focus-visible:border-[var(--tn-nav-active-border)] group-focus-visible:bg-[var(--tn-nav-active-bg)] group-focus-visible:text-[var(--tn-nav-active-text)] group-focus-visible:ring-2 group-focus-visible:ring-[var(--tn-primary)]/35 group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-[var(--tn-surface)]">
+                      <LogOut size={17} strokeWidth={1.8} />
+                    </span>
+                    <span className="min-w-0 flex-1">{signOutPending ? 'Signing out…' : 'Sign out'}</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -635,17 +763,22 @@ export default function Sidebar({
             aria-haspopup="menu"
             aria-expanded={accountMenuOpen}
             aria-label="Open account menu"
-            onClick={() => setAccountMenuOpen((open) => !open)}
-            title={collapsed ? 'My Workspace' : undefined}
+            onClick={() => {
+              setAccountActionError(null)
+              setAccountMenuOpen((open) => !open)
+            }}
+            title={collapsed ? 'TaskNest account' : undefined}
             className={`flex w-full items-center rounded-lg text-left transition hover:bg-[var(--tn-surface-hover)] ${
               collapsed ? 'mx-auto h-10 w-10 justify-center p-0' : 'gap-3 p-2'
             } ${focusRing}`}
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--tn-primary)] text-xs font-semibold leading-none text-white">A</div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--tn-primary)] text-xs font-semibold leading-none text-white">{accountInitials}</div>
             {!collapsed && (
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium text-[var(--tn-text)]">My Workspace</p>
-                <p className="text-[11px] text-[var(--tn-text-muted)]">Personal account</p>
+                <p className="truncate text-xs font-medium text-[var(--tn-text)]">{accountLabel}</p>
+                <p className="truncate text-[11px] text-[var(--tn-text-muted)]">
+                  {isLocalAccount ? 'Local account' : accountEmail || 'Google account'}
+                </p>
               </div>
             )}
             {!collapsed && <ChevronRight size={16} className={`shrink-0 text-[var(--tn-text-muted)] transition-transform ${accountMenuOpen ? '-rotate-90' : ''}`} />}
@@ -671,14 +804,16 @@ export default function Sidebar({
 
       {/* Shared create / edit modal */}
       {form && (
-        <WorkspaceEditorModal
-          workspace={form.workspace}
-          onClose={closeForm}
-          onSave={(data) => {
-            onUpdateWorkspace(form.workspace.id, data)
-            closeForm()
-          }}
-        />
+        <Suspense fallback={null}>
+          <WorkspaceEditorModal
+            workspace={form.workspace}
+            onClose={closeForm}
+            onSave={(data) => {
+              onUpdateWorkspace(form.workspace.id, data)
+              closeForm()
+            }}
+          />
+        </Suspense>
       )}
 
       {/* Delete confirmation */}

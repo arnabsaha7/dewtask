@@ -1,3 +1,4 @@
+
 export interface ThemePalette {
   id: string
   name: string
@@ -15,6 +16,7 @@ export interface ThemePalette {
     primary: string
     primaryHover: string
     primarySoft: string
+    primaryText: string
     input: string
     overlay: string
     shadow: string

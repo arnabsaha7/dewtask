@@ -250,5 +250,5 @@ export function useNotificationScheduler(
       window.removeEventListener('focus', handleWake)
       document.removeEventListener('visibilitychange', handleWake)
     }
-  }, [tasks, settings.remindersEnabled, settings.automaticDueDateReminders, settings.automaticOverdueReminders, settings.deadlineReminderTime, setNotifications, ready])
+  }, [tasks, settings, setNotifications, ready])
 }

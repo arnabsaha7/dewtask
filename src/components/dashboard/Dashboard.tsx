@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react'
+import { getTaskNestIdentity } from '../../services/identity'
 
 import {
   Activity,
@@ -58,10 +59,10 @@ const workspaceColors = [
 const getTimeBasedGreeting = () => {
   const hour = new Date().getHours()
 
-  if (hour >= 5 && hour < 12) return 'Good morning.'
-  if (hour >= 12 && hour < 17) return 'Good afternoon.'
-  if (hour >= 17 && hour < 21) return 'Good evening.'
-  return 'Good night.'
+  if (hour >= 5 && hour < 12) return 'Good morning'
+  if (hour >= 12 && hour < 17) return 'Good afternoon'
+  if (hour >= 17 && hour < 21) return 'Good evening'
+  return 'Good night'
 }
 
 export default function Dashboard({
@@ -73,8 +74,10 @@ export default function Dashboard({
   onSelectWorkspace,
 }: Props) {
   const [greeting, setGreeting] = useState(getTimeBasedGreeting)
+  const [clockNow, setClockNow] = useState(() => new Date())
+  const [displayName, setDisplayName] = useState('')
   const [range, setRange] = useState<'week' | 'month' | 'all'>('week')
-  const today = new Date()
+  const today = clockNow
   const dateLabel = today.toLocaleDateString(undefined, {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
   })
@@ -93,9 +96,39 @@ export default function Dashboard({
     return !Number.isNaN(taskDate.getTime()) && taskDate >= rangeStart && taskDate <= today
   })
 
+  // Load the account display name and keep it in sync with Profile edits.
+  useEffect(() => {
+    let active = true
+
+    const loadDisplayName = async () => {
+      try {
+        const identity = await getTaskNestIdentity()
+        if (active) {
+          setDisplayName(identity.account.displayName?.trim() ?? '')
+        }
+      } catch (error) {
+        console.error('Could not load the account display name:', error)
+      }
+    }
+
+    const handleIdentityUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ displayName?: string | null }>
+      setDisplayName(customEvent.detail?.displayName?.trim() ?? '')
+    }
+
+    void loadDisplayName()
+    window.addEventListener('tasknest:identity-updated', handleIdentityUpdate)
+
+    return () => {
+      active = false
+      window.removeEventListener('tasknest:identity-updated', handleIdentityUpdate)
+    }
+  }, [])
+
   // Refresh periodically so the greeting also changes if the dashboard stays open.
   useEffect(() => {
     const intervalId = window.setInterval(() => {
+      setClockNow(new Date())
       setGreeting(getTimeBasedGreeting())
     }, 60_000)
 
@@ -131,7 +164,9 @@ export default function Dashboard({
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--tn-text)]">
-            {greeting}
+            {displayName
+              ? `${greeting}, ${displayName.trim().split(/\\s+/)[0]}!`
+              : `${greeting}!`}
           </h1>
 
           <p className="mt-1 text-xs text-[var(--tn-text-muted)]">{dateLabel}</p>
@@ -244,7 +279,7 @@ export default function Dashboard({
         />
       </section>
 
-      <GraphCards tasks={visibleTasks} allTasks={tasks} categories={categories} range={range} rangeLabel={rangeLabel} />
+      <GraphCards tasks={visibleTasks} allTasks={tasks} categories={categories} range={range} rangeLabel={rangeLabel} now={today} />
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.6fr_1fr]">
         <div className="overflow-hidden rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)]">

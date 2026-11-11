@@ -39,6 +39,8 @@ export function useAppUpdater(): AppUpdaterControls {
 
   // Prevent multiple simultaneous update checks.
   const checkingRef = useRef(false)
+  const totalBytesRef = useRef<number | undefined>(undefined)
+  const downloadedBytesRef = useRef(0)
 
   const checkForUpdates = useCallback(async () => {
     if (!isTauri()) {
@@ -88,22 +90,23 @@ export function useAppUpdater(): AppUpdaterControls {
     setProgress(0)
     setError(null)
 
-    let downloadedBytes = 0
-    let totalBytes: number | undefined
+    downloadedBytesRef.current = 0
+    totalBytesRef.current = undefined
 
     try {
       await update.downloadAndInstall((event) => {
         if (event.event === 'Started') {
-          totalBytes = event.data.contentLength
+          totalBytesRef.current = event.data.contentLength
           setProgress(0)
         } else if (event.event === 'Progress') {
-          downloadedBytes += event.data.chunkLength
+          downloadedBytesRef.current += event.data.chunkLength
 
+          const totalBytes = totalBytesRef.current
           if (totalBytes && totalBytes > 0) {
             setProgress(
               Math.min(
                 100,
-                Math.round((downloadedBytes / totalBytes) * 100),
+                Math.round((downloadedBytesRef.current / totalBytes) * 100),
               ),
             )
           }

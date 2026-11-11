@@ -1,8 +1,8 @@
 import type { ThemePalette } from '../types'
 
 const theme: ThemePalette = {
-  id: 'sage-garden',
-  name: 'Sage Garden',
+  id: 'sage',
+  name: 'Sage',
   description: 'A quiet green palette with gentle contrast.',
   mode: 'light',
 
@@ -21,6 +21,7 @@ const theme: ThemePalette = {
     primary: '#527A5B',
     primaryHover: '#416849',
     primarySoft: '#E8F0E6',
+    primaryText: '#FFFFFF',
 
     accent: '#B7793E',
     accentHover: '#98602F',

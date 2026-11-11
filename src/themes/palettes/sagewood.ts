@@ -28,6 +28,7 @@ const theme: ThemePalette = {
     primary: '#A8B99B',
     primaryHover: '#BAC9AD',
     primarySoft: 'rgba(168, 185, 155, 0.13)',
+    primaryText: '#172015',
 
     // Accent: Warm Natural Ivory
     accent: '#D9BB83',

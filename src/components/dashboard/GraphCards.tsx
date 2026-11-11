@@ -7,6 +7,7 @@ interface Props {
   categories: Category[]
   range: 'week' | 'month' | 'all'
   rangeLabel: string
+  now: Date
 }
 
 const chartColors = [
@@ -23,9 +24,8 @@ const dayKey = (date: Date) =>
 const monthKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 
-export default function GraphCards({ tasks, allTasks, categories, range, rangeLabel }: Props) {
+export default function GraphCards({ tasks, allTasks, categories, range, rangeLabel, now }: Props) {
   const completionTrend = useMemo(() => {
-    const now = new Date()
     const buckets: { key: string; label: string; count: number }[] = []
     const completedDates = allTasks
       .filter((task) => task.status === 'Completed')
@@ -71,7 +71,7 @@ export default function GraphCards({ tasks, allTasks, categories, range, rangeLa
       if (bucket) bucket.count += 1
     })
     return buckets
-  }, [allTasks, range])
+  }, [allTasks, range, now])
 
   const categoryBreakdown = useMemo(() => {
     const counts = new Map<string, number>()

@@ -21,6 +21,7 @@ const theme: ThemePalette = {
     primary: '#477D9E',
     primaryHover: '#356B8C',
     primarySoft: '#E4F0F6',
+    primaryText: '#172015',
 
     accent: '#D97757',
     accentHover: '#C46143',

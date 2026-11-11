@@ -29,6 +29,7 @@ const theme: ThemePalette = {
     primary: '#596575',
     primaryHover: '#5D6878',
     primarySoft: 'rgba(89, 101, 117, 0.16)',
+    primaryText: '#FFFFFF',
 
     // Secondary graphite accent
     accent: '#929BA6',

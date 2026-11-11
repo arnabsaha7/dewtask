@@ -1,30 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 
 import Sidebar from './components/layout/Sidebar'
 import TitleBar from './components/layout/TitleBar'
 
-import Dashboard from './components/dashboard/Dashboard'
-
-import CreateTaskModal from './components/tasks/CreateTaskModal'
-import TaskDetailsDrawer from './components/tasks/TaskDetailsDrawer'
-
-import CategoryManager from './components/CategoryManager'
-import TagManager from './components/tags/TagManager'
-import Settings from './components/settings/Settings'
-
-import WorkspacePage from './components/workspace/WorkspacePage'
-import WorkspaceEditorModal from './components/workspace/WorkspaceEditorModal'
 import type { WorkspaceFormData } from './components/workspace/WorkspaceEditorModal'
-import WorkspaceExplorer from './components/workspace/WorkspaceExplorer'
-import TaskList from './components/tasks/TaskList'
-import KanbanBoard from './components/tasks/KanbanBoard'
-import CalendarPage from './components/calendar/CalendarPage'
-import NotificationsCenter from './components/notifications/NotificationsCenter'
 import { usePersistentValue } from './hooks/usePersistentValue'
 import { useAppUpdater } from './hooks/useAppUpdater'
 import { useNotificationScheduler, type TaskNotification } from './hooks/useNotificationScheduler'
 
 import { buildCategoryTree } from './utils/categories'
+import { signInWithGoogle, signOutFromGoogle } from './services/identity'
 
 import { useTasks } from './hooks/useTasks'
 import { useCategories } from './hooks/useCategories'
@@ -37,6 +22,23 @@ import type {
   Task,
   Workspace,
 } from './types'
+
+
+// Load feature screens and overlays only when the user opens them.
+const Dashboard = lazy(() => import('./components/dashboard/Dashboard'))
+const CreateTaskModal = lazy(() => import('./components/tasks/CreateTaskModal'))
+const TaskDetailsDrawer = lazy(() => import('./components/tasks/TaskDetailsDrawer'))
+const CategoryManager = lazy(() => import('./components/CategoryManager'))
+const TagManager = lazy(() => import('./components/tags/TagManager'))
+const Settings = lazy(() => import('./components/settings/Settings'))
+const Profile = lazy(() => import('./components/profile/Profile'))
+const WorkspacePage = lazy(() => import('./components/workspace/WorkspacePage'))
+const WorkspaceEditorModal = lazy(() => import('./components/workspace/WorkspaceEditorModal'))
+const WorkspaceExplorer = lazy(() => import('./components/workspace/WorkspaceExplorer'))
+const TaskList = lazy(() => import('./components/tasks/TaskList'))
+const KanbanBoard = lazy(() => import('./components/tasks/KanbanBoard'))
+const CalendarPage = lazy(() => import('./components/calendar/CalendarPage'))
+const NotificationsCenter = lazy(() => import('./components/notifications/NotificationsCenter'))
 
 
 
@@ -82,11 +84,8 @@ function App() {
   // --------------------------------------------------
 
   const updater = useAppUpdater()
-  const [updateBannerDismissed, setUpdateBannerDismissed] = useState(false)
-
-  useEffect(() => {
-    if (updater.updateAvailable) setUpdateBannerDismissed(false)
-  }, [updater.updateAvailable, updater.availableVersion])
+  const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState<string | null>(null)
+  const updateBannerDismissed = dismissedUpdateVersion === updater.availableVersion
 
   const [activeNav, setActiveNav] = useState('Overview')
 
@@ -595,6 +594,26 @@ function App() {
     }
   }
 
+  const publishIdentityUpdate = (identity: Awaited<ReturnType<typeof signInWithGoogle>>) => {
+    window.dispatchEvent(new CustomEvent('tasknest:identity-updated', {
+      detail: {
+        displayName: identity.account.displayName,
+        isLocal: identity.account.isLocal,
+        email: identity.account.email,
+      },
+    }))
+  }
+
+  const handleGoogleSignIn = async () => {
+    const identity = await signInWithGoogle()
+    publishIdentityUpdate(identity)
+  }
+
+  const handleGoogleSignOut = async () => {
+    const identity = await signOutFromGoogle()
+    publishIdentityUpdate(identity)
+  }
+
   // --------------------------------------------------
   // Render
   // --------------------------------------------------
@@ -625,6 +644,8 @@ function App() {
         expanded={expanded}
         onToggleExpanded={toggleExpanded}
         collapsed={sidebarCollapsed}
+        onSignIn={handleGoogleSignIn}
+        onSignOut={handleGoogleSignOut}
       />
 
       {/* Header and page content begin to the right of the sidebar. */}
@@ -647,7 +668,7 @@ function App() {
               </button>
               <button
                 type="button"
-                onClick={() => setUpdateBannerDismissed(true)}
+                onClick={() => setDismissedUpdateVersion(updater.availableVersion)}
                 className="rounded-lg border border-[var(--tn-border)] px-3.5 py-2 text-xs font-medium text-[var(--tn-text-muted)] transition hover:bg-[var(--tn-surface-muted)]"
               >
                 Later
@@ -656,6 +677,7 @@ function App() {
           </div>
         )}
         {/* Calendar */}
+        <Suspense fallback={<div className="flex min-h-48 items-center justify-center text-sm text-[var(--tn-text-muted)]">Loading…</div>}>
         {activeNav === 'Calendar' ? (
           <CalendarPage
             key={calendarWeekRequest}
@@ -667,6 +689,8 @@ function App() {
             onToggleTask={toggleTask}
             onCreateTask={openCalendarTask}
           />
+        ) : activeNav === 'Profile' ? (
+          <Profile />
         ) : activeNav === 'Settings' ? (
           <Settings
             settings={settings}
@@ -801,10 +825,12 @@ function App() {
             onManageTags={handleManageTags}
           />
         )}
+        </Suspense>
         </main>
       </div>
 
-      <NotificationsCenter
+      <Suspense fallback={null}>
+      {notificationsOpen && <NotificationsCenter
         open={notificationsOpen}
         notifications={notifications}
         onClose={() => setNotificationsOpen(false)}
@@ -815,10 +841,12 @@ function App() {
           if (task) setSelectedTask(task)
           setNotificationsOpen(false)
         }}
-      />
+      />}
+      </Suspense>
 
+      <Suspense fallback={null}>
       {/* Create task modal */}
-      <CreateTaskModal
+      {newTaskOpen && <CreateTaskModal
         open={newTaskOpen}
         workspaces={workspaces}
         categories={categories}
@@ -827,7 +855,7 @@ function App() {
         initialScheduledEnd={calendarScheduledEnd}
         onClose={closeNewTask}
         onCreate={handleCreateTask}
-      />
+      />}
 
       {/* Global create-workspace modal, opened from the header Create menu. */}
       {newWorkspaceOpen && (
@@ -882,6 +910,7 @@ function App() {
           onDelete={handleDeleteTask}
         />
       )}
+      </Suspense>
       </div>
     </div>
   )

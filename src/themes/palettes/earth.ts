@@ -27,6 +27,7 @@ const theme: ThemePalette = {
     primary: '#648B5D',
     primaryHover: '#52774C',
     primarySoft: 'rgba(142, 180, 134, 0.20)',
+    primaryText: '#172015',
 
     // Secondary accent: Earth Brown
     accent: '#997C70',

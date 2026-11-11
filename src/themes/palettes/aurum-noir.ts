@@ -26,6 +26,7 @@ const theme: ThemePalette = {
     primary: '#D6B779',
     primaryHover: '#E5C98D',
     primarySoft: 'rgba(214, 183, 121, 0.15)',
+    primaryText: '#172015',
 
     // Accent - Muted champagne ivory
     accent: '#E4D5B8',
