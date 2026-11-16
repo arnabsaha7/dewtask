@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from 'react'
 
 import {
@@ -9,11 +8,13 @@ import {
   ListTodo,
   Trash2,
   Tag as TagIcon,
+  Repeat,
 } from 'lucide-react'
 
 import type { Task, Category, Tag } from '../../types'
 import { formatTaskDate, type TaskNestSettings } from '../../hooks/useSettings'
 import { getDescendantIds } from '../../utils/categories'
+import { formatRecurrenceLabel } from '../../utils/recurrence'
 import ViewSwitcher from '../common/ViewSwitcher'
 import TagFilter from './TagFilter'
 import AutoProgressIndicator from './AutoProgressIndicator'
@@ -293,9 +294,15 @@ export default function TaskList({
                       {task.title}
                     </button>
 
-                    <p className="mt-1.5 truncate text-xs text-[var(--tn-text-muted)]">
-                      {category?.name ?? 'Uncategorized'}
-                    </p>
+                    <div className="mt-1.5 flex items-center gap-2 text-xs text-[var(--tn-text-muted)]">
+                      <span className="truncate">{category?.name ?? 'Uncategorized'}</span>
+                      {task.recurrence && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-[var(--tn-primary)]/10 px-1.5 py-0.5 text-[10px] font-medium text-[var(--tn-primary)]">
+                          <Repeat size={10} />
+                          {formatRecurrenceLabel(task.recurrence)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 

@@ -19,6 +19,7 @@ import { useSettings } from './hooks/useSettings'
 
 import type {
   Category,
+  RecurrenceRule,
   Task,
   Workspace,
 } from './types'
@@ -518,6 +519,7 @@ function App() {
     status: 'To Do' | 'In Progress' | 'Completed'
     dueDate: string | null
     reminderAt?: string | null
+    recurrence?: RecurrenceRule | null
     scheduledStart?: string | null
     scheduledEnd?: string | null
     autoProgressionEnabled: boolean

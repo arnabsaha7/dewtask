@@ -1,10 +1,12 @@
-
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Check, X, CalendarDays, ChevronDown } from 'lucide-react'
 import CategoryTreeSelect from './CategoryTreeSelect'
+import RecurrencePicker from './RecurrencePicker'
+import { getTodayLocalISO } from '../../utils/recurrence'
 import type {
   Category,
+  RecurrenceRule,
   TaskPriority,
   TaskStatus,
   Workspace,
@@ -27,6 +29,7 @@ interface Props {
     status: TaskStatus
     dueDate: string | null
     reminderAt: string | null
+    recurrence: RecurrenceRule | null
     scheduledStart: string | null
     scheduledEnd: string | null
     autoProgressionEnabled: boolean
@@ -133,6 +136,7 @@ export default function CreateTaskModal({
   const [status, setStatus] = useState<TaskStatus>('To Do')
   const [dueDate, setDueDate] = useState(initialDate ?? '')
   const [reminderAt, setReminderAt] = useState('')
+  const [recurrence, setRecurrence] = useState<RecurrenceRule | null>(null)
   const [scheduledStart, setScheduledStart] = useState(initialScheduledStart ? toLocalInputValue(initialScheduledStart) : '')
   const [scheduledEnd, setScheduledEnd] = useState(initialScheduledEnd ? toLocalInputValue(initialScheduledEnd) : '')
   const [autoProgressionEnabled, setAutoProgressionEnabled] = useState(false)
@@ -199,6 +203,9 @@ export default function CreateTaskModal({
         progressionEnd.getTime() <= Date.now())
     ) return
 
+    const effectiveDueDate =
+      (recurrence && !dueDate ? getTodayLocalISO() : dueDate) || null
+
     onCreate({
       title: trimmedTitle,
       description: description.trim(),
@@ -206,8 +213,9 @@ export default function CreateTaskModal({
       categoryId: effectiveCategoryId,
       priority,
       status,
-      dueDate: dueDate || null,
+      dueDate: effectiveDueDate,
       reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
+      recurrence,
       scheduledStart: autoProgressionEnabled && scheduledStart ? new Date(scheduledStart).toISOString() : null,
       scheduledEnd: autoProgressionEnabled && scheduledEnd ? new Date(scheduledEnd).toISOString() : null,
       autoProgressionEnabled,
@@ -461,7 +469,7 @@ export default function CreateTaskModal({
             </div>
           </div>
 
-          {/* Optional one-off reminder */}
+          {/* Optional reminder */}
           <div>
             <label
               htmlFor="task-reminder-at"
@@ -489,6 +497,16 @@ export default function CreateTaskModal({
               Choose when you want to be reminded about this task.
             </p>
           </div>
+
+          {/* Recurrence schedule */}
+          <RecurrencePicker
+            value={recurrence}
+            dueDate={dueDate}
+            onChange={setRecurrence}
+            onEnsureDueDate={() => {
+              if (!dueDate) setDueDate(getTodayLocalISO())
+            }}
+          />
 
           {/* Automatic progression */}
           <section className="rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] p-4">

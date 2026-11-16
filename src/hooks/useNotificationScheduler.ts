@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { Task } from '../types'
 import type { TaskNestSettings } from './useSettings'
+import { formatRecurrenceLabel } from '../utils/recurrence'
 import { Capacitor } from '@capacitor/core'
 import { isTauri } from '@tauri-apps/api/core'
 import {
@@ -29,22 +30,31 @@ function dateAtLocalTime(dateOnly: string, time: string): Date | null {
   return Number.isFinite(date.getTime()) ? date : null
 }
 
+function formatNotificationBody(
+  task: Task,
+  kind: TaskNotification['kind'],
+): string {
+  const baseMessages: Record<TaskNotification['kind'], string> = {
+    reminder: 'Your task reminder is due.',
+    due: 'This task is due today.',
+    overdue: 'This task is overdue.',
+  }
+
+  if (!task.recurrence) return baseMessages[kind]
+  return `${baseMessages[kind]} (${formatRecurrenceLabel(task.recurrence)})`
+}
+
 function makeNotification(
   task: Task,
   kind: TaskNotification['kind'],
   id: string,
   scheduledFor: Date,
 ): TaskNotification {
-  const messages = {
-    reminder: 'Your task reminder is due.',
-    due: 'This task is due today.',
-    overdue: 'This task is overdue.',
-  }
   return {
     id,
     taskId: task.id,
     title: task.title,
-    message: messages[kind],
+    message: formatNotificationBody(task, kind),
     kind,
     createdAt: new Date().toISOString(),
     scheduledFor: scheduledFor.toISOString(),
@@ -84,13 +94,27 @@ function buildNativePlan(tasks: Task[], settings: TaskNestSettings, now: Date): 
     if (task.status === 'Completed') continue
     if (task.reminderAt) {
       const reminderAt = new Date(task.reminderAt)
-      if (Number.isFinite(reminderAt.getTime())) add(task, `reminder-${task.id}-${task.reminderAt}`, 'Your task reminder is due.', reminderAt)
+      if (Number.isFinite(reminderAt.getTime())) {
+        add(
+          task,
+          `reminder-${task.id}-${task.reminderAt}`,
+          formatNotificationBody(task, 'reminder'),
+          reminderAt,
+        )
+      }
     }
     if (!task.dueDate) continue
 
     if (settings.automaticDueDateReminders) {
       const dueAt = dateAtLocalTime(task.dueDate, settings.deadlineReminderTime || '09:00')
-      if (dueAt) add(task, `due-${task.id}-${task.dueDate}`, 'This task is due today.', dueAt)
+      if (dueAt) {
+        add(
+          task,
+          `due-${task.id}-${task.dueDate}`,
+          formatNotificationBody(task, 'due'),
+          dueAt,
+        )
+      }
     }
 
     if (settings.automaticOverdueReminders && task.dueDate < today) {
@@ -100,7 +124,14 @@ function buildNativePlan(tasks: Task[], settings: TaskNestSettings, now: Date): 
         const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset)
         const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
         const overdueAt = dateAtLocalTime(dateKey, settings.deadlineReminderTime || '09:00')
-        if (overdueAt) add(task, `overdue-${task.id}-${dateKey}`, 'This task is overdue.', overdueAt)
+        if (overdueAt) {
+          add(
+            task,
+            `overdue-${task.id}-${dateKey}`,
+            formatNotificationBody(task, 'overdue'),
+            overdueAt,
+          )
+        }
       }
     }
   }

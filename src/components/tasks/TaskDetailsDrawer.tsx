@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 
 import {
@@ -21,9 +20,12 @@ import type {
   Category,
   Workspace,
   Tag,
+  RecurrenceRule,
 } from '../../types'
 
 import CategoryTreeSelect from './CategoryTreeSelect'
+import RecurrencePicker from './RecurrencePicker'
+import { getTodayLocalISO } from '../../utils/recurrence'
 
 interface Props {
   task: Task
@@ -102,6 +104,9 @@ export default function TaskDetailsDrawer({
   const [status, setStatus] = useState<TaskStatus>(task.status)
   const [dueDate, setDueDate] = useState(task.dueDate ?? '')
   const [reminderAt, setReminderAt] = useState(toLocalDateTimeInput(task.reminderAt))
+  const [recurrence, setRecurrence] = useState<RecurrenceRule | null>(
+    task.recurrence ?? null
+  )
   const [autoProgressionEnabled, setAutoProgressionEnabled] = useState(task.autoProgressionEnabled ?? false)
   const [scheduleType, setScheduleType] = useState<'duration' | 'end'>('end')
   const [durationHours, setDurationHours] = useState('1')
@@ -229,7 +234,8 @@ export default function TaskDetailsDrawer({
       (scheduleType === 'duration' && (!Number.isFinite(Number(durationHours)) || Number(durationHours) <= 0))
     )) return
 
-
+    const effectiveDueDate =
+      (recurrence && !dueDate ? getTodayLocalISO() : dueDate) || null
 
     onSave(task.id, {
       title: trimmedTitle,
@@ -238,8 +244,12 @@ export default function TaskDetailsDrawer({
       categoryId,
       priority,
       status,
-      dueDate: dueDate || null,
+      dueDate: effectiveDueDate,
       reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
+      recurrence,
+      recurrenceSeriesId: recurrence
+        ? (task.recurrenceSeriesId ?? task.id)
+        : null,
       autoProgressionEnabled,
       autoProgressionStartAt: progressionStartValue?.toISOString() ?? null,
       autoProgressionEndAt: progressionEndValue?.toISOString() ?? null,
@@ -521,7 +531,7 @@ export default function TaskDetailsDrawer({
               />
             </div>
 
-            {/* Optional one-off reminder */}
+            {/* Optional reminder */}
             <div>
               <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-[var(--tn-text-subtle)]">
                 Reminder (optional)
@@ -535,6 +545,16 @@ export default function TaskDetailsDrawer({
               />
               <p className="mt-1.5 text-xs text-[var(--tn-text-subtle)]">Leave empty to remove this task's individual reminder.</p>
             </div>
+
+            {/* Recurrence schedule */}
+            <RecurrencePicker
+              value={recurrence}
+              dueDate={dueDate}
+              onChange={setRecurrence}
+              onEnsureDueDate={() => {
+                if (!dueDate) setDueDate(getTodayLocalISO())
+              }}
+            />
 
             {/* Automatic progression */}
             <section className="rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] p-4">

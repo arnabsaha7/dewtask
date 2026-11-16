@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from 'react'
 import type { DragEvent } from 'react'
 
@@ -8,11 +7,13 @@ import {
   Clock3,
   CheckCircle2,
   Tag as TagIcon,
+  Repeat,
 } from 'lucide-react'
 
 import type { Task, Category, TaskStatus, Tag } from '../../types'
 import { formatTaskDate, type TaskNestSettings } from '../../hooks/useSettings'
 import { getDescendantIds } from '../../utils/categories'
+import { formatRecurrenceLabel } from '../../utils/recurrence'
 import ViewSwitcher from '../common/ViewSwitcher'
 import TagFilter from './TagFilter'
 import AutoProgressIndicator from './AutoProgressIndicator'
@@ -351,7 +352,7 @@ export default function KanbanBoard({
                           : 'opacity-100'
                       }`}
                     >
-                      {/* Priority and due date */}
+                      {/* Priority, recurrence, and due date */}
                       <div className="mb-3 flex items-start justify-between gap-3">
                         <span
                           className={`rounded-md px-2 py-1 text-[11px] font-medium ${
@@ -361,12 +362,23 @@ export default function KanbanBoard({
                           {task.priority}
                         </span>
 
-                        {dueDate && (
-                          <span className="flex items-center gap-1 text-[11px] text-[var(--tn-text-subtle)]">
-                            <CalendarDays size={12} />
-                            {dueDate}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {task.recurrence && (
+                            <span
+                              title={formatRecurrenceLabel(task.recurrence)}
+                              className="flex items-center gap-1 rounded bg-[var(--tn-primary)]/10 px-1.5 py-0.5 text-[10px] font-medium text-[var(--tn-primary)]"
+                            >
+                              <Repeat size={10} />
+                            </span>
+                          )}
+
+                          {dueDate && (
+                            <span className="flex items-center gap-1 text-[11px] text-[var(--tn-text-subtle)]">
+                              <CalendarDays size={12} />
+                              {dueDate}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Task title */}
