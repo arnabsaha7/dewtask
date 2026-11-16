@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Sidebar from './components/layout/Sidebar'
 import TitleBar from './components/layout/TitleBar'
@@ -10,6 +10,7 @@ import { useNotificationScheduler, type TaskNotification } from './hooks/useNoti
 
 import { buildCategoryTree } from './utils/categories'
 import { signInWithGoogle, signOutFromGoogle } from './services/identity'
+import { APP_VERSION } from './data/releaseNotes'
 
 import { useTasks } from './hooks/useTasks'
 import { useCategories } from './hooks/useCategories'
@@ -40,8 +41,39 @@ const TaskList = lazy(() => import('./components/tasks/TaskList'))
 const KanbanBoard = lazy(() => import('./components/tasks/KanbanBoard'))
 const CalendarPage = lazy(() => import('./components/calendar/CalendarPage'))
 const NotificationsCenter = lazy(() => import('./components/notifications/NotificationsCenter'))
+const OnboardingModal = lazy(() => import('./components/onboarding/OnboardingModal'))
+const WhatsNewModal = lazy(() => import('./components/onboarding/WhatsNewModal'))
 
+function useLocalFlag<T>(key: string, defaultValue: T): [T, (next: T) => void, boolean] {
+  const [state, setState] = useState<{ value: T; hydrated: boolean }>(() => {
+    if (typeof window === 'undefined') {
+      return { value: defaultValue, hydrated: false }
+    }
+    try {
+      const raw = window.localStorage.getItem(key)
+      return {
+        value: raw !== null ? (JSON.parse(raw) as T) : defaultValue,
+        hydrated: true,
+      }
+    } catch {
+      return { value: defaultValue, hydrated: true }
+    }
+  })
 
+  const updateValue = useCallback(
+    (next: T) => {
+      setState({ value: next, hydrated: true })
+      try {
+        window.localStorage.setItem(key, JSON.stringify(next))
+      } catch {
+        // Ignore storage quota or private-mode errors
+      }
+    },
+    [key],
+  )
+
+  return [state.value, updateValue, state.hydrated]
+}
 
 function App() {
   // --------------------------------------------------
@@ -149,6 +181,63 @@ function App() {
   const [calendarWeekRequest, setCalendarWeekRequest] = useState(0)
   const [calendarScheduledStart, setCalendarScheduledStart] = useState<string | null>(null)
   const [calendarScheduledEnd, setCalendarScheduledEnd] = useState<string | null>(null)
+
+  // --------------------------------------------------
+  // Onboarding & version upgrade guide state
+  // --------------------------------------------------
+
+  const [onboardingCompleted, setOnboardingCompleted, onboardingHydrated] =
+    useLocalFlag<boolean>('tasknest_onboarding_completed', false)
+  const [lastSeenVersion, setLastSeenVersion, versionHydrated] =
+    useLocalFlag<string | null>('tasknest_last_seen_version', null)
+
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false)
+  const [upgradedFromVersion, setUpgradedFromVersion] = useState<string | null>(null)
+  const startupPromptChecked = useRef(false)
+
+  useEffect(() => {
+    if (!onboardingHydrated || !versionHydrated || startupPromptChecked.current) return
+    startupPromptChecked.current = true
+
+    if (!onboardingCompleted) {
+      setOnboardingOpen(true)
+      return
+    }
+
+    if (lastSeenVersion !== APP_VERSION) {
+      setUpgradedFromVersion(lastSeenVersion)
+      setWhatsNewOpen(true)
+    }
+  }, [onboardingHydrated, versionHydrated, onboardingCompleted, lastSeenVersion])
+
+  useEffect(() => {
+    const openGuide = () => setOnboardingOpen(true)
+    const openNotes = () => setWhatsNewOpen(true)
+    window.addEventListener('tasknest:open-onboarding', openGuide)
+    window.addEventListener('tasknest:open-whats-new', openNotes)
+    return () => {
+      window.removeEventListener('tasknest:open-onboarding', openGuide)
+      window.removeEventListener('tasknest:open-whats-new', openNotes)
+    }
+  }, [])
+
+  const handleCloseOnboarding = () => {
+    setOnboardingOpen(false)
+    if (!onboardingCompleted) {
+      setOnboardingCompleted(true)
+    }
+    if (lastSeenVersion !== APP_VERSION) {
+      setLastSeenVersion(APP_VERSION)
+    }
+  }
+
+  const handleCloseWhatsNew = () => {
+    setWhatsNewOpen(false)
+    if (lastSeenVersion !== APP_VERSION) {
+      setLastSeenVersion(APP_VERSION)
+    }
+  }
 
   // --------------------------------------------------
   // Selected task for details drawer
@@ -910,6 +999,26 @@ function App() {
           onClose={() => setSelectedTask(null)}
           onSave={updateTask}
           onDelete={handleDeleteTask}
+        />
+      )}
+
+      {/* First-time user onboarding guide */}
+      {onboardingOpen && (
+        <OnboardingModal
+          open={onboardingOpen}
+          onClose={handleCloseOnboarding}
+          onCreateFirstTask={() => setNewTaskOpen(true)}
+        />
+      )}
+
+      {/* Version upgrade / What's New modal */}
+      {whatsNewOpen && (
+        <WhatsNewModal
+          open={whatsNewOpen}
+          version={APP_VERSION}
+          previousVersion={upgradedFromVersion}
+          onClose={handleCloseWhatsNew}
+          onOpenGuide={() => setOnboardingOpen(true)}
         />
       )}
       </Suspense>

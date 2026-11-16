@@ -7,6 +7,7 @@ import {
   Download, Upload, Trash2, AlertTriangle,
   HardDrive, ShieldCheck, Bell, Settings as SettingsIcon,
   Folder, Tags, Layers, SlidersHorizontal, ListTodo, RefreshCw,
+  Compass, Sparkles,
 
 } from 'lucide-react'
 
@@ -21,6 +22,7 @@ import {
 } from '../../hooks/useSettings'
 
 import { themes, SYSTEM_THEME_ID } from '../../themes/registry'
+import { APP_VERSION } from '../../data/releaseNotes'
 import { Capacitor } from '@capacitor/core'
 import { isTauri } from '@tauri-apps/api/core'
 import { getVersion } from '@tauri-apps/api/app'
@@ -585,13 +587,15 @@ export default function SettingsSections({ section, settings, updateSetting, onN
 
   }
 
+  const displayVersion = appVersion || APP_VERSION
+
   return (
 
     <section><Heading title="About DewTask" description="Application details and project credits." /><Card>
       <div className="flex items-center gap-4 border-b border-[var(--tn-border)] pb-5"><div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--tn-primary)]/15 text-[var(--tn-primary)]"><SettingsIcon size={25} /></div><div><h3 className="text-base font-semibold text-[var(--tn-text)]">DewTask</h3><p className="mt-1 text-xs text-[var(--tn-text-subtle)]">Personal task management</p></div></div>
       <div className="divide-y divide-[var(--tn-border)]">
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Application</span><span className="text-[var(--tn-text)]">DewTask</span></div>
-        <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Version</span><span className="text-[var(--tn-text)]">{appVersion}</span></div>
+        <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Version</span><span className="text-[var(--tn-text)]">{displayVersion}</span></div>
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Storage</span><span className="text-right text-[var(--tn-text)]">Local storage</span></div>
         <div className="flex items-center justify-between gap-4 py-4 text-sm"><span className="text-[var(--tn-text-subtle)]">Operating mode</span><span className="text-[var(--tn-text)]">Offline-first</span></div>
       </div>
@@ -647,6 +651,35 @@ export default function SettingsSections({ section, settings, updateSetting, onN
           )}
         </div>
       )}
+
+      <div className="mt-4 rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)]/70 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--tn-text)]">Guides &amp; release notes</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--tn-text-muted)]">
+              Revisit the interactive workspace walkthrough or view the latest highlights.
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event('tasknest:open-onboarding'))}
+              className={secondaryButton}
+            >
+              <Compass size={15} className="text-[var(--tn-primary)]" />
+              User guide
+            </button>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event('tasknest:open-whats-new'))}
+              className={secondaryButton}
+            >
+              <Sparkles size={15} className="text-[var(--tn-primary)]" />
+              What’s new (v{displayVersion})
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="mt-4 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)]/70 p-4">
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--tn-text-subtle)]">Created by</p>

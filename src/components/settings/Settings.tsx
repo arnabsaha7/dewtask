@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import {
   Settings as SettingsIcon,
@@ -127,7 +126,7 @@ export default function Settings({
             updater={updater}
           />
 
-          {activeSection !== 'data' && (
+          {activeSection !== 'data' && activeSection !== 'about' && (
             <div className="mt-6 flex flex-col gap-3 border-t border-[var(--tn-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-[var(--tn-text-muted)]">
                 Changes are saved automatically.
