@@ -1,6 +1,6 @@
 import packageJson from '../../package.json'
 
-export const APP_VERSION: string = packageJson.version ?? '1.2.2'
+export const APP_VERSION = packageJson.version
 
 // Match the GitHub repository configured in your Tauri updater
 const GITHUB_REPO = 'arnabsaha7/dewtask'
@@ -24,27 +24,33 @@ export interface ReleaseEntry {
  */
 export const RELEASE_NOTES: ReleaseEntry[] = [
   {
-    version: '1.2.2',
+    version: '1.3.0',
     date: 'November 2026',
-    headline: 'Recurring tasks, smart reminder shifting, and onboarding guide.',
+    headline: 'Recurring tasks with smart reminder shifting, an interactive user onboarding guide, and automatic release notes.',
     highlights: [
       {
         badge: 'New',
-        title: 'Recurring Tasks & Auto-Shifting Reminders',
+        title: 'Recurring Tasks & Schedules',
         description:
-          'Repeat tasks daily, weekly (with custom weekdays), monthly, or yearly. Completing a task automatically schedules the next cycle and shifts its reminder.',
+          'Repeat tasks daily, weekly (with custom weekdays), monthly, or yearly. Completing a task automatically schedules the next occurrence and resets its checklist.',
       },
       {
         badge: 'New',
-        title: 'Interactive Onboarding & Upgrade Guides',
+        title: 'Auto-Shifting Reminders',
         description:
-          'Step-by-step workspace walkthrough for new users and automatic release summaries whenever DewTask updates.',
+          'Task reminders and auto-progression timers automatically shift forward by the exact interval whenever a recurring cycle completes.',
       },
       {
-        badge: 'Improved',
-        title: 'Multi-Platform Notification Sync',
+        badge: 'New',
+        title: 'Interactive User Onboarding Guide',
         description:
-          'Recurring schedules now display directly inside desktop, mobile, and in-app notification alerts.',
+          'Added a 5-step guided walkthrough for new users covering workspaces, nested folders, recurring tasks, views, and task management.',
+      },
+      {
+        badge: 'New',
+        title: 'Automatic Release Notes',
+        description:
+          'DewTask now fetches and displays what\'s new automatically after an update and lets you replay the user guide or release notes anytime from Settings → About.',
       },
     ],
   },
@@ -98,10 +104,6 @@ function normalizeBadge(raw: string): ReleaseHighlight['badge'] | null {
 
 /**
  * Parses a GitHub Release Markdown body into structured ReleaseEntry highlights.
- * Supports:
- * - Natural or bracketed headers: `New Feature:`, `### Bug Fixes`, `[New]:`, `[IMPROVED]:`
- * - Inline tagged items: `[IMPROVED] Title: Desc`, `- [FIX] Single sentence`
- * - Standard bullets/numbered items with or without `Title: Description`
  */
 export function parseGitHubReleaseBody(
   version: string,
@@ -127,36 +129,39 @@ export function parseGitHubReleaseBody(
   let activeSectionBadge: ReleaseHighlight['badge'] | null = null
   const highlights: ReleaseHighlight[] = []
 
-  // Matches standalone section headers with or without brackets/markdown headings:
-  // e.g. "New Feature:", "### Bug Fixes", "[New]:", "**Improvements**:"
   const sectionHeaderRegex = /^(?:#{1,6}\s*)?\*{0,2}\[?([A-Za-z' ]+?)\]?\*{0,2}\s*:?\s*$/
-
-  // Matches single-line tagged items with optional bullet/number:
-  // e.g. "[IMPROVED] Title: Desc", "- [NEW] **Title**: Desc", "1. [FIX] Single line"
   const inlineTaggedRegex = /^(?:[-*+]|\d+[.)])?\s*\[([A-Za-z' ]+)\]\s*:?\s*(.+)$/
-
-  // Matches list items under a section header:
-  // e.g. "- Added recurring tasks." or "1. **Title**: Description"
   const listItemRegex = /^(?:[-*+]|\d+[.)])\s+(.+)$/
 
   const splitTitleAndDesc = (
     rawText: string,
   ): { title?: string; description: string } => {
     const cleaned = rawText.replace(/\*{1,2}/g, '').trim()
-    const separatorMatch = cleaned.match(/^([^:–—-]+?)\s*[:–—-]\s+(.+)$/)
-    if (separatorMatch) {
+
+    // 1. Prioritize a colon separator (allows hyphens like "Auto-Shifting" in titles)
+    const colonMatch = cleaned.match(/^([^:]+?):\s+(.+)$/)
+    if (colonMatch) {
       return {
-        title: separatorMatch[1].trim(),
-        description: separatorMatch[2].trim(),
+        title: colonMatch[1].trim(),
+        description: colonMatch[2].trim(),
       }
     }
+
+    // 2. Fallback to spaced dash separators (e.g. "Title - Description")
+    const dashMatch = cleaned.match(/^(.+?)\s+[–—-]\s+(.+)$/)
+    if (dashMatch) {
+      return {
+        title: dashMatch[1].trim(),
+        description: dashMatch[2].trim(),
+      }
+    }
+
     return {
       description: cleaned,
     }
   }
 
   for (const line of lines) {
-    // 1. Standalone section header like "New Feature:" or "[New]:"
     const sectionMatch = line.match(sectionHeaderRegex)
     if (sectionMatch) {
       const detected = normalizeBadge(sectionMatch[1])
@@ -166,7 +171,6 @@ export function parseGitHubReleaseBody(
       }
     }
 
-    // 2. Inline tagged item like "[IMPROVED] Better sync"
     const inlineMatch = line.match(inlineTaggedRegex)
     if (inlineMatch) {
       const badge = normalizeBadge(inlineMatch[1]) ?? 'Improved'
@@ -175,7 +179,6 @@ export function parseGitHubReleaseBody(
       continue
     }
 
-    // 3. Numbered or bulleted item (inherits active section badge if set)
     const listMatch = line.match(listItemRegex)
     if (listMatch) {
       const badge = activeSectionBadge ?? 'Improved'
@@ -184,10 +187,8 @@ export function parseGitHubReleaseBody(
       continue
     }
 
-    // 4. Ignore other Markdown headings (e.g. "## Changelog")
     if (line.startsWith('#')) continue
 
-    // 5. First plain descriptive paragraph becomes the modal headline
     if (!headline) {
       headline = line.replace(/\*{1,2}/g, '').trim()
     }
@@ -284,7 +285,6 @@ export async function fetchReleaseForVersion(
       }
     } catch (error) {
       if ((error as Error).name === 'AbortError') throw error
-      // Network error or offline — fall through to fallback
     }
   }
 
