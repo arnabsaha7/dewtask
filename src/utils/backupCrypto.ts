@@ -32,9 +32,10 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(chunks.join(''))
 }
 
-function base64ToBytes(base64: string): Uint8Array {
+function base64ToBytes(base64: string): Uint8Array<ArrayBuffer> {
   const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
+  const buffer = new ArrayBuffer(binary.length)
+  const bytes = new Uint8Array(buffer)
   for (let i = 0; i < binary.length; i += 1) {
     bytes[i] = binary.charCodeAt(i)
   }
@@ -43,7 +44,7 @@ function base64ToBytes(base64: string): Uint8Array {
 
 async function deriveAesKey(
   passphrase: string,
-  salt: Uint8Array,
+  salt: Uint8Array<ArrayBuffer>,
   iterations: number,
   usage: KeyUsage[],
 ): Promise<CryptoKey> {
@@ -82,8 +83,8 @@ export async function encryptBackupPayload(
     throw new Error('A passphrase is required to encrypt the backup.')
   }
 
-  const salt = window.crypto.getRandomValues(new Uint8Array(SALT_BYTES))
-  const iv = window.crypto.getRandomValues(new Uint8Array(IV_BYTES))
+  const salt = window.crypto.getRandomValues(new Uint8Array(new ArrayBuffer(SALT_BYTES)))
+  const iv = window.crypto.getRandomValues(new Uint8Array(new ArrayBuffer(IV_BYTES)))
   const key = await deriveAesKey(passphrase, salt, DEFAULT_ITERATIONS, ['encrypt'])
 
   const encodedPlaintext = new TextEncoder().encode(plaintextJson)
