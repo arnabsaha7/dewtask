@@ -7,13 +7,11 @@ import {
   Download, Upload, Trash2, AlertTriangle,
   HardDrive, ShieldCheck, Bell, Settings as SettingsIcon,
   Folder, Tags, Layers, SlidersHorizontal, ListTodo, RefreshCw,
-  Compass, Sparkles,
+  Compass, Sparkles, CheckCircle2,
 
 } from 'lucide-react'
 
 import {
-
-  DEFAULT_SETTINGS,
 
   SETTINGS_STORAGE_KEY,
 
@@ -33,7 +31,19 @@ import {
   sendNotification as sendTauriNotification,
 } from '@tauri-apps/plugin-notification'
 import { LocalNotifications } from '@capacitor/local-notifications'
-import { clearStorage, readAllStorage, replaceAllStorage, storageRecordExists, type StorageKey } from '../../utils/storage'
+import { clearStorage, storageRecordExists, type StorageKey } from '../../utils/storage'
+import {
+  BACKUP_DATA_KEYS,
+  decryptAndParseEnvelope,
+  exportDewTaskBackup,
+  inspectBackupFile,
+  pickAndReadNativeBackupFile,
+  restoreValidatedBackup,
+  validateBackupPayload,
+  type ExportBackupResult,
+} from '../../utils/backupService'
+import type { EncryptedBackupEnvelope } from '../../utils/backupCrypto'
+import BackupPassphraseModal from './BackupPassphraseModal'
 import SyncSettingsSection from './SyncSettingsSection'
 
 type Section = 'general' | 'appearance' | 'tasks' | 'notifications' | 'sync' | 'data' | 'about'
@@ -60,25 +70,20 @@ interface Props {
 
 }
 
-const DATA_KEYS = [
+type BackupModalState =
+  | { mode: 'export' }
+  | { mode: 'import'; encrypted: true; envelope: EncryptedBackupEnvelope; fileName?: string }
+  | { mode: 'import'; encrypted: false; data: Record<string, unknown>; fileName?: string }
 
-  'tasknest_tasks',
-
-  'tasknest_categories',
-
-  'tasknest_tags',
-
-  'tasknest_workspaces',
-
-] as const
+const DATA_KEYS = BACKUP_DATA_KEYS
 
 const cardClass = 'rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface)] p-5 shadow-sm sm:p-6'
 
-const fieldClass = 'w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-3.5 py-2.5 text-sm text-[var(--tn-text)] outline-none transition hover:border-[var(--tn-border)] focus:border-[var(--tn-primary)] focus:ring-2 focus:ring-indigo-500/15'
+const fieldClass = 'w-full rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] px-3.5 py-2.5 text-sm text-[var(--tn-text)] outline-none transition hover:border-[var(--tn-border)] focus:border-[var(--tn-primary)] focus:ring-2 focus:ring-[var(--tn-primary)]/20'
 
-const secondaryButton = 'inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-4 py-2.5 text-sm font-medium text-[var(--tn-text)] transition hover:border-[var(--tn-border)] hover:bg-[var(--tn-surface-muted)]'
+const secondaryButton = 'inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--tn-border)] bg-[var(--tn-surface)] px-4 py-2.5 text-sm font-medium text-[var(--tn-text)] transition hover:border-[var(--tn-border)] hover:bg-[var(--tn-surface-muted)] disabled:cursor-not-allowed disabled:opacity-50'
 
-const primaryButton = 'inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--tn-primary)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--tn-primary-hover)]'
+const primaryButton = 'inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--tn-primary)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--tn-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50'
 
 function Heading({ title, description }: { title: string; description: string }) {
 
@@ -114,7 +119,7 @@ function Toggle({ checked, label, onChange }: { checked: boolean; label: string;
 
     <button type="button" role="switch" aria-label={label} aria-checked={checked} onClick={() => onChange(!checked)}
 
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-indigo-500/40 ${checked ? 'bg-indigo-600' : 'bg-[var(--tn-border)]'}`}>
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-[var(--tn-primary)]/40 ${checked ? 'bg-[var(--tn-primary)]' : 'bg-[var(--tn-border)]'}`}>
 
       <span className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
 
@@ -137,8 +142,15 @@ export default function SettingsSections({ section, settings, updateSetting, onN
   const fileInput = useRef<HTMLInputElement>(null)
 
   const [importError, setImportError] = useState('')
+  const [encryptOnExport, setEncryptOnExport] = useState(true)
+  const [isExporting, setIsExporting] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [lastBackupResult, setLastBackupResult] = useState<ExportBackupResult | null>(null)
+  const [restoreSuccessMessage, setRestoreSuccessMessage] = useState('')
+  const [passphraseModal, setPassphraseModal] = useState<BackupModalState | null>(null)
   const [storageStatus, setStorageStatus] = useState<Record<string, boolean>>({})
   const [notificationPermission, setNotificationPermission] = useState<string>(() => typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported')
+
   useEffect(() => {
     if (section !== 'notifications') return
     let cancelled = false
@@ -172,34 +184,101 @@ export default function SettingsSections({ section, settings, updateSetting, onN
     return () => { cancelled = true }
   }, [section])
 
-  const exportData = async () => {
+  const handleExportClick = async () => {
+    setImportError('')
+    setRestoreSuccessMessage('')
+
+    if (encryptOnExport) {
+      setPassphraseModal({ mode: 'export' })
+      return
+    }
+
+    setIsExporting(true)
     try {
-      const stored = await readAllStorage()
-      const backup: Record<string, unknown> = {
-        application: 'DewTask',
-        backupVersion: 1,
-        exportedAt: new Date().toISOString(),
-        tasknest_tasks: stored.tasknest_tasks ?? [],
-        tasknest_categories: stored.tasknest_categories ?? [],
-        tasknest_tags: stored.tasknest_tags ?? [],
-        tasknest_workspaces: stored.tasknest_workspaces ?? [],
-        tasknest_settings: stored.tasknest_settings ?? DEFAULT_SETTINGS,
-        tasknest_notifications: stored.tasknest_notifications ?? [],
-      }
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `dewtask-backup-${new Date().toISOString().slice(0, 10)}.json`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(url)
-      onNotice('Your DewTask backup has been exported.')
+      const result = await exportDewTaskBackup({ encrypt: false })
+      setLastBackupResult(result)
+      onNotice(`Backup saved to ${result.savedPath}`)
     } catch (error) {
       console.error('Failed to export DewTask data:', error)
-      onNotice('Could not export your data. Please try again.')
+      setImportError(
+        error instanceof Error
+          ? error.message
+          : 'Could not export your backup. Please try again.',
+      )
+    } finally {
+      setIsExporting(false)
     }
+  }
+
+  const processBackupContent = (rawText: string, fileName?: string) => {
+    const inspected = inspectBackupFile(rawText)
+
+    if (inspected.kind === 'encrypted') {
+      setPassphraseModal({
+        mode: 'import',
+        encrypted: true,
+        envelope: inspected.envelope,
+        fileName,
+      })
+      return
+    }
+
+    validateBackupPayload(inspected.data)
+    setPassphraseModal({
+      mode: 'import',
+      encrypted: false,
+      data: inspected.data,
+      fileName,
+    })
+  }
+
+  const handleImportClick = async () => {
+    setImportError('')
+    setRestoreSuccessMessage('')
+
+    if (isTauri()) {
+      setIsImporting(true)
+      try {
+        const picked = await pickAndReadNativeBackupFile()
+        if (!picked) return
+        processBackupContent(picked.content, picked.fileName)
+      } catch (error) {
+        setImportError(
+          error instanceof Error ? error.message : 'Unable to import this backup.',
+        )
+      } finally {
+        setIsImporting(false)
+      }
+      return
+    }
+
+    fileInput.current?.click()
+  }
+
+  const handlePassphraseSubmit = async (passphrase: string) => {
+    if (!passphraseModal) return
+
+    if (passphraseModal.mode === 'export') {
+      const result = await exportDewTaskBackup({ encrypt: true, passphrase })
+      setLastBackupResult(result)
+      setPassphraseModal(null)
+      onNotice(`Encrypted backup saved to ${result.savedPath}`)
+      return
+    }
+
+    const targetName = passphraseModal.fileName
+    const backupData = passphraseModal.encrypted
+      ? await decryptAndParseEnvelope(passphraseModal.envelope, passphrase)
+      : passphraseModal.data
+
+    validateBackupPayload(backupData)
+    await restoreValidatedBackup(backupData)
+    setPassphraseModal(null)
+    setRestoreSuccessMessage(
+      `${passphraseModal.encrypted ? 'Encrypted backup' : 'Backup'}${targetName ? ` (${targetName})` : ''} restored successfully. Reloading DewTask…`,
+    )
+    onNotice('Backup restored. Reloading DewTask...')
+    window.setTimeout(() => window.location.reload(), 800)
   }
 
   const importData = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -209,56 +288,14 @@ export default function SettingsSections({ section, settings, updateSetting, onN
     if (!file) return
 
     setImportError('')
+    setRestoreSuccessMessage('')
 
     try {
-
-      const parsed: unknown = JSON.parse(await file.text())
-
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('This is not a valid backup file.')
-
-      const backup = parsed as Record<string, unknown>
-
-      if (!(backup.application === 'DewTask' || backup.application === 'TaskNest')) throw new Error('This backup does not appear to be from DewTask or an earlier TaskNest version.')
-
-      if (!DATA_KEYS.every((key) => Array.isArray(backup[key]))) {
-
-        throw new Error('Backup is incomplete. Tasks, categories, tags and workspaces must all be present.')
-
-      }
-
-      const rawSettings = backup[SETTINGS_STORAGE_KEY]
-
-      if (!rawSettings || typeof rawSettings !== 'object' || Array.isArray(rawSettings)) {
-
-        throw new Error('The backup contains invalid settings.')
-
-      }
-
-      if (!window.confirm('Restore this backup? Your current DewTask data and preferences will be replaced.')) return
-
-      const restoredSettings = { ...DEFAULT_SETTINGS, ...(rawSettings as Partial<TaskNestSettings>) }
-
-      await replaceAllStorage({
-        tasknest_tasks: backup.tasknest_tasks,
-        tasknest_categories: backup.tasknest_categories,
-        tasknest_tags: backup.tasknest_tags,
-        tasknest_workspaces: backup.tasknest_workspaces,
-        tasknest_settings: restoredSettings,
-        tasknest_notifications: Array.isArray(backup.tasknest_notifications) ? backup.tasknest_notifications : [],
-      })
-
-      onNotice('Backup restored. Reloading DewTask...')
-
-      window.setTimeout(() => window.location.reload(), 700)
-
+      processBackupContent(await file.text(), file.name)
     } catch (error) {
-
       setImportError(error instanceof Error ? error.message : 'Unable to import this backup.')
-
     } finally {
-
       event.target.value = ''
-
     }
 
   }
@@ -487,58 +524,117 @@ export default function SettingsSections({ section, settings, updateSetting, onN
             description="Keep a portable copy of your DewTask workspace or restore it from a backup."
           />
           <Card>
-            <div className="flex flex-col gap-4">
-              <div className="flex min-w-0 items-center gap-3.5">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] text-[var(--tn-primary)]">
-                  <HardDrive size={19} strokeWidth={1.9} />
+            <div className="space-y-4">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--tn-border)] bg-[var(--tn-surface-muted)] text-[var(--tn-primary)]">
+                  <HardDrive size={18} strokeWidth={1.9} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold leading-5 text-[var(--tn-text)]">
+                  <p className="text-sm font-semibold text-[var(--tn-text)]">
                     Your DewTask backup
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-[var(--tn-text-subtle)]">
-                    Export your tasks, workspaces and preferences, or restore them from a backup file.
+                  <p className="mt-0.5 text-xs text-[var(--tn-text-subtle)]">
+                    Export or restore your tasks, workspaces and preferences.
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--tn-border)] pt-4">
-                <button
-                  type="button"
-                  className={`${primaryButton} min-h-10 whitespace-nowrap px-3.5`}
-                  onClick={exportData}
+              {lastBackupResult && (
+                <div
+                  role="status"
+                  className="flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.07] p-3.5"
                 >
-                  <Download size={15} />
-                  Export backup
-                </button>
-                <button
-                  type="button"
-                  className={`${secondaryButton} min-h-10 whitespace-nowrap px-3.5`}
-                  onClick={() => fileInput.current?.click()}
+                  <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-emerald-400" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-emerald-300">
+                      {lastBackupResult.encrypted
+                        ? 'Encrypted backup created'
+                        : 'Backup created'}
+                    </p>
+                    <p className="mt-1 break-all font-mono text-[11px] leading-5 text-[var(--tn-text-muted)]">
+                      {lastBackupResult.savedPath}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {restoreSuccessMessage && (
+                <div
+                  role="status"
+                  className="flex items-center gap-2.5 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.07] px-3.5 py-3 text-xs font-medium text-emerald-300"
                 >
-                  <Upload size={15} />
-                  Import backup
-                </button>
+                  <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
+                  <span>{restoreSuccessMessage}</span>
+                </div>
+              )}
+
+              {importError && (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-red-500/25 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300"
+                >
+                  {importError}
+                </p>
+              )}
+
+              <div className="flex flex-col gap-3 border-t border-[var(--tn-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <label className="inline-flex cursor-pointer select-none items-center gap-2.5 text-sm text-[var(--tn-text)]">
+                  <input
+                    type="checkbox"
+                    checked={encryptOnExport}
+                    onChange={(e) => setEncryptOnExport(e.target.checked)}
+                    className="h-4 w-4 rounded border-[var(--tn-border)] accent-[var(--tn-primary)]"
+                  />
+                  <span>Encrypted backup</span>
+                </label>
+
+                <div className="flex flex-wrap items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    disabled={isExporting || isImporting}
+                    className={`${secondaryButton} min-h-10 whitespace-nowrap px-4`}
+                    onClick={handleImportClick}
+                  >
+                    <Upload size={15} />
+                    {isImporting ? 'Opening…' : 'Import backup'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isExporting || isImporting}
+                    className={`${primaryButton} min-h-10 whitespace-nowrap px-4`}
+                    onClick={handleExportClick}
+                  >
+                    <Download size={15} />
+                    {isExporting ? 'Exporting…' : 'Export backup'}
+                  </button>
+                </div>
               </div>
             </div>
 
             <input
               ref={fileInput}
               type="file"
-              accept=".json,application/json"
+              accept=".dewbackup,.json,application/json"
               className="hidden"
               onChange={importData}
             />
-
-            {importError && (
-              <p
-                role="alert"
-                className="mt-4 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-300"
-              >
-                {importError}
-              </p>
-            )}
           </Card>
+
+          <BackupPassphraseModal
+            open={passphraseModal !== null}
+            mode={passphraseModal?.mode ?? 'export'}
+            encrypted={passphraseModal?.mode === 'import' ? passphraseModal.encrypted : true}
+            fileName={passphraseModal?.mode === 'import' ? passphraseModal.fileName : undefined}
+            exportedAt={
+              passphraseModal?.mode === 'import' && passphraseModal.encrypted
+                ? passphraseModal.envelope.exportedAt
+                : passphraseModal?.mode === 'import' && !passphraseModal.encrypted && typeof passphraseModal.data.exportedAt === 'string'
+                  ? passphraseModal.data.exportedAt
+                  : undefined
+            }
+            onClose={() => setPassphraseModal(null)}
+            onSubmit={handlePassphraseSubmit}
+          />
         </section>
 
         <section><Heading title="Your local data" description="See what information DewTask saves on this device." /><Card>

@@ -123,6 +123,8 @@ fn sync_get_queue_summary(db: State<'_, Database>) -> Result<SyncQueueSummary, S
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             #[cfg(desktop)]
             app.handle()

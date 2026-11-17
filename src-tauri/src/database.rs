@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use serde_json::{json, Value};
-use std::{collections::HashMap, fs, path::PathBuf, sync::Mutex};
+use std::{collections::HashMap, fs, sync::Mutex};
 use tauri::{AppHandle, Manager};
 
 mod identity;
@@ -21,7 +21,6 @@ const DATA_KEYS: [&str; 6] = [
 
 pub struct Database {
     connection: Mutex<Connection>,
-    database_path: PathBuf,
 }
 
 impl Database {
@@ -167,7 +166,6 @@ impl Database {
 
         let db = Self {
             connection: Mutex::new(connection),
-            database_path,
         };
 
         // Apply the account/sync schema before migrating legacy records. The
@@ -419,71 +417,6 @@ impl Database {
         sync::record_changes(&tx, sync_snapshot)?;
 
         tx.commit()
-    }
-
-    pub fn backup_to(&self, destination: &str) -> Result<(), String> {
-        let connection = self
-            .connection
-            .lock()
-            .map_err(|_| "Database lock is unavailable".to_string())?;
-
-        connection
-            .execute_batch("PRAGMA wal_checkpoint(FULL)")
-            .map_err(|error| error.to_string())?;
-
-        fs::copy(&self.database_path, destination).map_err(|error| error.to_string())?;
-
-        Ok(())
-    }
-
-    pub fn restore_from(&self, source: &str) -> Result<(), String> {
-        let source_path = PathBuf::from(source);
-
-        if !source_path.is_file() {
-            return Err("The selected backup file does not exist.".into());
-        }
-
-        let connection = self
-            .connection
-            .lock()
-            .map_err(|_| "Database lock is unavailable".to_string())?;
-
-        connection
-            .execute_batch("PRAGMA wal_checkpoint(FULL)")
-            .map_err(|error| error.to_string())?;
-
-        let candidate = Connection::open(&source_path).map_err(|error| error.to_string())?;
-
-        let integrity: String = candidate
-            .query_row("PRAGMA integrity_check", [], |row| row.get(0))
-            .map_err(|error| error.to_string())?;
-
-        if integrity != "ok" {
-            return Err("The selected backup failed its integrity check.".into());
-        }
-
-        let table_exists: bool = candidate
-            .query_row(
-                "SELECT EXISTS(
-                    SELECT 1 FROM sqlite_master
-                    WHERE type = 'table' AND name = 'workspaces'
-                )",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|error| error.to_string())?;
-
-        if !table_exists {
-            return Err("This is not a TaskNest SQLite backup.".into());
-        }
-
-        // Restore remains a separate operation from normal sync writes.
-        // The source database is validated before any replacement is attempted.
-        drop(candidate);
-
-        Err("Direct SQLite restore is not enabled in this build. \
-             Use TaskNest's JSON import to restore your data safely."
-            .into())
     }
 
     // Synchronization methods are implemented in database/sync.rs.
